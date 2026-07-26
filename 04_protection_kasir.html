@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produktivitas Kasir & Protection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1c2126;
+    --paper:#f6f5f2;
+    --line:#d8d5cd;
+    --accent:#2f6d5e;
+    --accent-soft:#e4ede9;
+    --warn:#a4472b;
+    --muted:#6b6f66;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+    background:var(--paper); color:var(--ink); font-size:14px;
+  }
+  header.top{
+    background:var(--ink); color:#fff; padding:18px 28px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+  }
+  header.top h1{font-size:18px; margin:0; font-weight:600; letter-spacing:.2px;}
+  header.top .sub{font-size:12px; color:#c9cdc7; margin-top:2px;}
+  .wrap{max-width:1320px; margin:0 auto; padding:20px 24px 60px;}
+
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; margin-bottom:18px;
+  }
+  .panel h2{font-size:14px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);}
+
+  .grid-import{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:820px){.grid-import{grid-template-columns:1fr;}}
+  .filebox{
+    border:1.5px dashed var(--line); border-radius:8px; padding:14px 16px;
+    display:flex; flex-direction:column; gap:6px; background:#fbfbf9;
+  }
+  .filebox label{font-weight:600; font-size:13px;}
+  .filebox small{color:var(--muted);}
+  .filebox input[type=file]{font-size:12px;}
+  .status-ok{color:var(--accent); font-weight:600; font-size:12.5px;}
+  .status-pending{color:var(--muted); font-size:12.5px;}
+
+  .filter-row{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
+  .field{display:flex; flex-direction:column; gap:4px;}
+  .field label{font-size:12px; color:var(--muted); font-weight:600;}
+  .field input, .field select, textarea{
+    font-family:inherit; border:1px solid var(--line); border-radius:6px;
+    padding:7px 9px; font-size:13px; background:#fff; color:var(--ink);
+  }
+  textarea{width:100%; min-height:64px; resize:vertical; font-family:monospace; font-size:12.5px;}
+  button{
+    background:var(--ink); color:#fff; border:none; border-radius:6px;
+    padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600;
+  }
+  button.secondary{background:#fff; color:var(--ink); border:1px solid var(--line);}
+  button.accent{background:var(--accent);}
+  button:hover{opacity:.88;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  details.settings{margin-top:10px;}
+  details.settings summary{cursor:pointer; font-size:12.5px; color:var(--muted); font-weight:600;}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px;}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+  .kpi{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px;
+  }
+  .kpi .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px;}
+  .kpi .val{font-size:19px; font-weight:700;}
+  .kpi.warn .val{color:var(--warn);}
+  .kpi.highlight .val{font-size:15px; line-height:1.3;}
+  .kpi.highlight .note{margin-top:4px;}
+  .kpi.accent .val{color:var(--accent);}
+
+  table{width:100%; border-collapse:collapse; font-size:12.8px;}
+  thead th{
+    background:#eceae4; text-align:left; padding:8px 10px; border-bottom:2px solid var(--line);
+    position:sticky; top:0; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px; color:#3a3d38;
+  }
+  tbody td{padding:7px 10px; border-bottom:1px solid #ece9e2;}
+  tbody tr:hover{background:#f5f4ef;}
+  tfoot td{font-weight:700; padding:8px 10px; border-top:2px solid var(--line); background:#f0efe9;}
+  .num{text-align:right; font-variant-numeric:tabular-nums;}
+  .tablewrap{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:8px;}
+
+  .panel-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .panel-head h2{margin:0;}
+  .empty{padding:30px; text-align:center; color:var(--muted); font-size:13px;}
+  .tag{display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--accent-soft); color:var(--accent); font-weight:700;}
+  .charts{display:grid; grid-template-columns:1.3fr 1fr; gap:16px;}
+  @media(max-width:960px){.charts{grid-template-columns:1fr;}}
+  canvas{max-height:280px;}
+  .note{font-size:11.5px; color:var(--muted); margin-top:8px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>Produktivitas Kasir &amp; Transaksi Mitra10 Protection</h1>
+    <div class="sub">Support Back TLC — MITRA10 Tallasa City Makassar</div>
+  </div>
+  <div class="sub" id="rangeLabel">Belum ada data diimpor</div>
+</header>
+
+<div class="wrap">
+
+  <section class="panel">
+    <h2>1. Import Data</h2>
+    <div class="grid-import">
+      <div class="filebox">
+        <label>Report Salesperson Cashier (.xlsx)</label>
+        <small>Sumber perhitungan produktivitas kasir: receipt unik, waktu transaksi, value receipt.</small>
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls">
+        <span id="statusXlsx" class="status-pending">Belum diimpor</span>
+      </div>
+      <div class="filebox">
+        <label>Sales Detail Report by Salesperson (.csv)</label>
+        <small>Sumber perhitungan qty transaksi Mitra10 Protection per kasir.</small>
+        <input type="file" id="fileCsv" accept=".csv">
+        <span id="statusCsv" class="status-pending">Belum diimpor</span>
+      </div>
+    </div>
+
+    <details class="settings">
+      <summary>Pengaturan kode kasir yang dipantau ▾</summary>
+      <div style="margin-top:8px;">
+        <div class="field" style="max-width:520px;">
+          <label>Daftar Cashier ID (satu kode per baris)</label>
+          <textarea id="kasirCodes">S11000-0000000179
+S11000-0000000311
+S11000-0000000394
+S11000-0000000420
+S11000-0000000598
+S11000-0000000641
+S11000-0000000645</textarea>
+        </div>
+        <div class="note">Kode ini dipakai untuk menyaring kasir di file XLSX (kolom Cashier ID) dan salesperson di file CSV (kolom Salesperson ID) saat mendeteksi transaksi Mitra10 Protection.</div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>2. Filter Tanggal Laporan</h2>
+    <div class="filter-row">
+      <div class="field">
+        <label>Dari Tanggal</label>
+        <input type="date" id="dateFrom">
+      </div>
+      <div class="field">
+        <label>Sampai Tanggal</label>
+        <input type="date" id="dateTo">
+      </div>
+      <button id="btnApply" class="accent" disabled>Terapkan Filter</button>
+      <button id="btnReset" class="secondary" disabled>Reset</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3. Ringkasan</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Kasir Aktif</div><div class="val" id="kpiKasir">0</div></div>
+      <div class="kpi accent"><div class="lbl">Total Receipt Unik</div><div class="val" id="kpiReceipt">0</div></div>
+      <div class="kpi"><div class="lbl">Total Waktu Transaksi</div><div class="val" id="kpiMenit">0 mnt</div></div>
+      <div class="kpi"><div class="lbl">Rata² Waktu / Receipt</div><div class="val" id="kpiRataMenit">0 mnt</div></div>
+      <div class="kpi accent"><div class="lbl">Total Value Receipt</div><div class="val" id="kpiValue">Rp 0</div></div>
+      <div class="kpi warn"><div class="lbl">Total Qty Protection</div><div class="val" id="kpiProtQty">0</div></div>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr); margin-top:12px;">
+      <div class="kpi accent highlight">
+        <div class="lbl">🏆 Receipt Terbanyak</div>
+        <div class="val" id="topReceiptName">-</div>
+        <div class="note" id="topReceiptVal"></div>
+      </div>
+      <div class="kpi highlight">
+        <div class="lbl">⏱ Total Waktu Tertinggi</div>
+        <div class="val" id="topMinuteName">-</div>
+        <div class="note" id="topMinuteVal"></div>
+      </div>
+      <div class="kpi accent highlight">
+        <div class="lbl">⚡ Kasir Tercepat (rata² waktu/receipt)</div>
+        <div class="val" id="topFastName">-</div>
+        <div class="note" id="topFastVal"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 style="margin:0;">4. Grafik Produktivitas</h2>
+    </div>
+    <div class="charts">
+      <div><canvas id="chartReceiptPerDay"></canvas></div>
+      <div><canvas id="chartProtQty"></canvas></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 style="margin:0;">5. Produktivitas Kasir per Hari</h2>
+      <button class="secondary" id="dlDaily" disabled>Unduh CSV</button>
+    </div>
+    <div class="tablewrap"><table id="tblDaily">
+      <thead><tr>
+        <th>Tanggal</th><th>Cashier ID</th><th>Nama Kasir</th>
+        <th class="num">Receipt Unik</th><th class="num">Total Waktu (mnt)</th>
+        <th class="num">Rata² Waktu/Receipt (mnt)</th>
+        <th class="num">Total Value Receipt</th><th class="num">Rata² Value/Receipt</th>
+      </tr></thead>
+      <tbody><tr><td colspan="8" class="empty">Belum ada data — import file XLSX terlebih dahulu.</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 style="margin:0;">6. Ringkasan Produktivitas per Kasir (Periode Terpilih)</h2>
+      <button class="secondary" id="dlSummary" disabled>Unduh CSV</button>
+    </div>
+    <div class="tablewrap"><table id="tblSummary">
+      <thead><tr>
+        <th>Cashier ID</th><th>Nama Kasir</th>
+        <th class="num">Hari Aktif</th>
+        <th class="num">Total Receipt Unik</th>
+        <th class="num">Total Waktu (mnt)</th>
+        <th class="num">Rata² Waktu/Receipt (mnt)</th>
+        <th class="num">Total Value Receipt</th>
+        <th class="num">Rata² Value/Receipt</th>
+        <th class="num">Receipt/Hari</th>
+      </tr></thead>
+      <tbody><tr><td colspan="9" class="empty">Belum ada data.</td></tr></tbody>
+      <tfoot></tfoot>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 style="margin:0;">7. Transaksi Mitra10 Protection per Kasir <span class="tag" id="protTag">0 baris</span></h2>
+      <button class="secondary" id="dlProt" disabled>Unduh CSV</button>
+    </div>
+    <div class="tablewrap"><table id="tblProt">
+      <thead><tr>
+        <th>Cashier ID (Salesperson)</th><th>Nama Kasir</th>
+        <th>Item Code</th><th>Deskripsi Item</th>
+        <th class="num">Total Qty</th><th class="num">Total Value</th>
+      </tr></thead>
+      <tbody><tr><td colspan="6" class="empty">Belum ada data — import file CSV terlebih dahulu.</td></tr></tbody>
+      <tfoot></tfoot>
+    </table></div>
+    <div class="note">Baris disaring berdasarkan kata kunci item (default "PROTECTION") dan kode kasir pada Pengaturan di atas, dicocokkan ke kolom Salesperson ID pada file CSV.</div>
+  </section>
+
+</div>
+
+<script>
+let xlsxRows = [];   // raw parsed cashier productivity rows
+let csvRows  = [];   // raw parsed sales detail rows
+let kasirSet = new Set();
+let chartDaily = null, chartProt = null;
+
+const $ = id => document.getElementById(id);
+
+function parseIDNumber(s){
+  if (s === undefined || s === null) return 0;
+  if (typeof s === 'number') return s;
+  s = String(s).trim();
+  if (s === '' || s.toLowerCase() === 'null') return 0;
+  s = s.replace(/,/g, '');
+  const v = parseFloat(s);
+  return isNaN(v) ? 0 : v;
+}
+
+function toDateStr(d){
+  if (!d) return '';
+  if (typeof d === 'string'){
+    // try dd/mm/yy formats
+    const m = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (m){
+      let yy = m[3].length===2 ? ('20'+m[3]) : m[3];
+      return `${yy}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    }
+    return d.slice(0,10);
+  }
+  if (d instanceof Date && !isNaN(d)){
+    return d.toISOString().slice(0,10);
+  }
+  return String(d).slice(0,10);
+}
+
+function fmtRp(n){
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+}
+function fmtNum(n, dec=0){
+  return n.toLocaleString('id-ID', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+
+function getKasirCodes(){
+  return $('kasirCodes').value.split('\n').map(s=>s.trim()).filter(Boolean);
+}
+
+/* ---------------- XLSX IMPORT ---------------- */
+$('fileXlsx').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      // find header row (contains 'Cashier ID')
+      let headerIdx = rows.findIndex(r => r.some(c => String(c).trim() === 'Cashier ID'));
+      if (headerIdx === -1) { $('statusXlsx').textContent = 'Format tidak dikenali (kolom Cashier ID tidak ditemukan)'; $('statusXlsx').className='status-pending'; return; }
+      const headers = rows[headerIdx].map(h => String(h).trim());
+      const idx = name => headers.indexOf(name);
+      const iCashierId = idx('Cashier ID'), iCashierName = idx('Cashier Name'),
+            iSalesId = idx('Salesperson ID'), iSalesName = idx('Salesperson Name'),
+            iDate = idx('Transaction Date'), iReceipt = idx('Receipt No'),
+            iStart = idx('Start Transaction'), iEnd = idx('End Transaction'),
+            iMinute = idx('Total Transaction Minute'), iItemReceipt = idx('Total Item Receipt'),
+            iItemSalper = idx('Total Item Salper Kasir'), iValSales = idx('Value Salesperson'),
+            iValReceipt = idx('Value Receipt');
+
+      const out = [];
+      for (let i = headerIdx+1; i < rows.length; i++){
+        const r = rows[i];
+        if (!r || !r[iCashierId]) continue;
+        out.push({
+          cashierId: String(r[iCashierId]).trim(),
+          cashierName: String(r[iCashierName]||'').trim(),
+          salesId: String(r[iSalesId]||'').trim(),
+          salesName: String(r[iSalesName]||'').trim(),
+          dateStr: toDateStr(r[iDate]),
+          receiptNo: String(r[iReceipt]||'').trim(),
+          startT: String(r[iStart]||''),
+          endT: String(r[iEnd]||''),
+          minute: parseIDNumber(r[iMinute]),
+          itemReceipt: parseIDNumber(r[iItemReceipt]),
+          itemSalper: parseIDNumber(r[iItemSalper]),
+          valSales: parseIDNumber(r[iValSales]),
+          valReceipt: parseIDNumber(r[iValReceipt]),
+        });
+      }
+      xlsxRows = out;
+      $('statusXlsx').textContent = `Terimpor: ${out.length} baris`;
+      $('statusXlsx').className = 'status-ok';
+      afterImport();
+    }catch(err){
+      $('statusXlsx').textContent = 'Gagal membaca file: ' + err.message;
+      $('statusXlsx').className = 'status-pending';
+    }
+  };
+  reader.readAsArrayBuffer(f);
+});
+
+/* ---------------- CSV IMPORT ---------------- */
+$('fileCsv').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      let text = ev.target.result;
+      // strip BOM
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const lines = text.split(/\r?\n/);
+      let headerIdx = lines.findIndex(l => l.includes('Receipt Date') && l.includes('Salesperson ID'));
+      if (headerIdx === -1){ $('statusCsv').textContent = 'Format tidak dikenali (header tidak ditemukan)'; return; }
+      const headers = lines[headerIdx].split(';').map(h=>h.trim());
+      const idx = name => headers.indexOf(name);
+      const iDate = idx('Receipt Date'), iReceipt = idx('Receipt No'), iItemNo = idx('Item No'),
+            iItemName = idx('Item Name'), iQty = idx('Quantity'), iAmtIncl = idx('Amount Inculde Sales'),
+            iAmtExcl = idx('Amount Exclude Sales'), iSalesId = idx('Salesperson ID'), iSalesName = idx('Salesperson Name');
+
+      const out = [];
+      for (let i = headerIdx+1; i < lines.length; i++){
+        const line = lines[i];
+        if (!line || !line.trim()) continue;
+        const cols = line.split(';');
+        if (cols.length < headers.length - 1) continue;
+        const salesId = String(cols[iSalesId]||'').trim();
+        if (!salesId || salesId.toLowerCase()==='null') continue;
+        out.push({
+          dateStr: toDateStr(cols[iDate]),
+          receiptNo: String(cols[iReceipt]||'').trim(),
+          itemNo: String(cols[iItemNo]||'').trim(),
+          itemName: String(cols[iItemName]||'').trim(),
+          qty: parseIDNumber(cols[iQty]),
+          amtIncl: parseIDNumber(cols[iAmtIncl]),
+          amtExcl: parseIDNumber(cols[iAmtExcl]),
+          salesId: salesId,
+          salesName: String(cols[iSalesName]||'').trim(),
+        });
+      }
+      csvRows = out;
+      $('statusCsv').textContent = `Terimpor: ${out.length} baris`;
+      $('statusCsv').className = 'status-ok';
+      afterImport();
+    }catch(err){
+      $('statusCsv').textContent = 'Gagal membaca file: ' + err.message;
+      $('statusCsv').className = 'status-pending';
+    }
+  };
+  reader.readAsText(f, 'utf-8');
+});
+
+function afterImport(){
+  if (xlsxRows.length === 0 && csvRows.length === 0) return;
+  // determine date range from whichever data is available
+  const allDates = [...xlsxRows.map(r=>r.dateStr), ...csvRows.map(r=>r.dateStr)].filter(Boolean).sort();
+  if (allDates.length){
+    $('dateFrom').value = allDates[0];
+    $('dateTo').value = allDates[allDates.length-1];
+  }
+  $('btnApply').disabled = false;
+  $('btnReset').disabled = false;
+  computeAll();
+}
+
+$('btnApply').addEventListener('click', computeAll);
+$('btnReset').addEventListener('click', function(){
+  const allDates = [...xlsxRows.map(r=>r.dateStr), ...csvRows.map(r=>r.dateStr)].filter(Boolean).sort();
+  if (allDates.length){
+    $('dateFrom').value = allDates[0];
+    $('dateTo').value = allDates[allDates.length-1];
+  }
+  computeAll();
+});
+
+let lastDaily = [], lastSummary = [], lastProt = [];
+
+function computeAll(){
+  kasirSet = new Set(getKasirCodes());
+  const from = $('dateFrom').value, to = $('dateTo').value;
+  $('rangeLabel').textContent = from && to ? `Periode: ${from} s/d ${to}` : 'Semua tanggal';
+
+  // ---- filter xlsx rows by kasir + date range ----
+  const filteredX = xlsxRows.filter(r =>
+    kasirSet.has(r.cashierId) &&
+    (!from || r.dateStr >= from) && (!to || r.dateStr <= to)
+  );
+
+  // dedupe by cashierId + dateStr + receiptNo (rows repeat per split salesperson)
+  const receiptMap = new Map();
+  filteredX.forEach(r => {
+    const key = r.cashierId + '|' + r.dateStr + '|' + r.receiptNo;
+    if (!receiptMap.has(key)){
+      receiptMap.set(key, {
+        cashierId: r.cashierId, cashierName: r.cashierName, dateStr: r.dateStr,
+        receiptNo: r.receiptNo, minute: r.minute, valReceipt: r.valReceipt
+      });
+    }
+  });
+
+  // group per cashier per date
+  const dailyMap = new Map();
+  receiptMap.forEach(rec => {
+    const key = rec.cashierId + '|' + rec.dateStr;
+    if (!dailyMap.has(key)){
+      dailyMap.set(key, {
+        cashierId: rec.cashierId, cashierName: rec.cashierName, dateStr: rec.dateStr,
+        receipts: 0, totalMinute: 0, totalValue: 0
+      });
+    }
+    const d = dailyMap.get(key);
+    d.receipts += 1;
+    d.totalMinute += rec.minute;
+    d.totalValue += rec.valReceipt;
+  });
+
+  lastDaily = Array.from(dailyMap.values()).sort((a,b)=>
+    a.dateStr === b.dateStr ? a.cashierId.localeCompare(b.cashierId) : a.dateStr.localeCompare(b.dateStr)
+  );
+
+  // summary per cashier across period
+  const sumMap = new Map();
+  lastDaily.forEach(d => {
+    if (!sumMap.has(d.cashierId)){
+      sumMap.set(d.cashierId, {
+        cashierId: d.cashierId, cashierName: d.cashierName,
+        hariAktif: 0, receipts: 0, totalMinute: 0, totalValue: 0
+      });
+    }
+    const s = sumMap.get(d.cashierId);
+    s.hariAktif += 1;
+    s.receipts += d.receipts;
+    s.totalMinute += d.totalMinute;
+    s.totalValue += d.totalValue;
+  });
+  lastSummary = Array.from(sumMap.values()).sort((a,b)=>b.receipts-a.receipts);
+
+  // ---- protection csv ----
+  const keyword = 'PROTECTION';
+  const filteredC = csvRows.filter(r =>
+    kasirSet.has(r.salesId) &&
+    r.itemName.toUpperCase().includes(keyword) &&
+    (!from || r.dateStr >= from) && (!to || r.dateStr <= to)
+  );
+  const protMap = new Map();
+  filteredC.forEach(r => {
+    const key = r.salesId + '|' + r.itemNo;
+    if (!protMap.has(key)){
+      protMap.set(key, {
+        salesId: r.salesId, salesName: r.salesName, itemNo: r.itemNo, itemName: r.itemName,
+        qty: 0, value: 0
+      });
+    }
+    const p = protMap.get(key);
+    p.qty += r.qty;
+    p.value += r.amtIncl;
+  });
+  lastProt = Array.from(protMap.values()).sort((a,b)=> b.qty - a.qty);
+
+  renderKpi();
+  renderDailyTable();
+  renderSummaryTable();
+  renderProtTable();
+  renderCharts();
+}
+
+function renderKpi(){
+  const totalReceipt = lastSummary.reduce((s,r)=>s+r.receipts,0);
+  const totalMinute = lastSummary.reduce((s,r)=>s+r.totalMinute,0);
+  const totalValue = lastSummary.reduce((s,r)=>s+r.totalValue,0);
+  const totalProtQty = lastProt.reduce((s,r)=>s+r.qty,0);
+  $('kpiKasir').textContent = lastSummary.length;
+  $('kpiReceipt').textContent = fmtNum(totalReceipt);
+  $('kpiMenit').textContent = fmtNum(totalMinute) + ' mnt';
+  $('kpiRataMenit').textContent = (totalReceipt ? fmtNum(totalMinute/totalReceipt,1) : '0') + ' mnt';
+  $('kpiValue').textContent = fmtRp(totalValue);
+  $('kpiProtQty').textContent = fmtNum(totalProtQty);
+  renderHighlights();
+}
+
+function renderHighlights(){
+  const active = lastSummary.filter(s => s.receipts > 0);
+  if (active.length === 0){
+    ['topReceipt','topMinute','topFast'].forEach(k=>{ $(k+'Name').textContent='-'; $(k+'Val').textContent=''; });
+    return;
+  }
+  const topReceipt = active.reduce((a,b)=> b.receipts > a.receipts ? b : a);
+  $('topReceiptName').textContent = topReceipt.cashierName || topReceipt.cashierId;
+  $('topReceiptVal').textContent = `${topReceipt.cashierId} — ${fmtNum(topReceipt.receipts)} receipt`;
+
+  const topMinute = active.reduce((a,b)=> b.totalMinute > a.totalMinute ? b : a);
+  $('topMinuteName').textContent = topMinute.cashierName || topMinute.cashierId;
+  $('topMinuteVal').textContent = `${topMinute.cashierId} — ${fmtNum(topMinute.totalMinute)} menit total`;
+
+  const withAvg = active.map(s => ({...s, avg: s.totalMinute / s.receipts}));
+  const topFast = withAvg.reduce((a,b)=> b.avg < a.avg ? b : a);
+  $('topFastName').textContent = topFast.cashierName || topFast.cashierId;
+  $('topFastVal').textContent = `${topFast.cashierId} — rata² ${fmtNum(topFast.avg,1)} mnt/receipt`;
+}
+
+function renderDailyTable(){
+  const tb = document.querySelector('#tblDaily tbody');
+  if (lastDaily.length === 0){
+    tb.innerHTML = '<tr><td colspan="8" class="empty">Tidak ada data pada periode / kode kasir yang dipilih.</td></tr>';
+    $('dlDaily').disabled = true;
+    return;
+  }
+  tb.innerHTML = lastDaily.map(d => `<tr>
+    <td>${d.dateStr}</td><td>${d.cashierId}</td><td>${d.cashierName}</td>
+    <td class="num">${fmtNum(d.receipts)}</td>
+    <td class="num">${fmtNum(d.totalMinute)}</td>
+    <td class="num">${fmtNum(d.receipts? d.totalMinute/d.receipts:0,1)}</td>
+    <td class="num">${fmtRp(d.totalValue)}</td>
+    <td class="num">${fmtRp(d.receipts? d.totalValue/d.receipts:0)}</td>
+  </tr>`).join('');
+  $('dlDaily').disabled = false;
+}
+
+function renderSummaryTable(){
+  const tb = document.querySelector('#tblSummary tbody');
+  const tf = document.querySelector('#tblSummary tfoot');
+  if (lastSummary.length === 0){
+    tb.innerHTML = '<tr><td colspan="9" class="empty">Tidak ada data pada periode / kode kasir yang dipilih.</td></tr>';
+    tf.innerHTML = '';
+    $('dlSummary').disabled = true;
+    return;
+  }
+  tb.innerHTML = lastSummary.map(s => `<tr>
+    <td>${s.cashierId}</td><td>${s.cashierName}</td>
+    <td class="num">${s.hariAktif}</td>
+    <td class="num">${fmtNum(s.receipts)}</td>
+    <td class="num">${fmtNum(s.totalMinute)}</td>
+    <td class="num">${fmtNum(s.receipts? s.totalMinute/s.receipts:0,1)}</td>
+    <td class="num">${fmtRp(s.totalValue)}</td>
+    <td class="num">${fmtRp(s.receipts? s.totalValue/s.receipts:0)}</td>
+    <td class="num">${fmtNum(s.hariAktif? s.receipts/s.hariAktif:0,1)}</td>
+  </tr>`).join('');
+  const totReceipt = lastSummary.reduce((a,s)=>a+s.receipts,0);
+  const totMinute = lastSummary.reduce((a,s)=>a+s.totalMinute,0);
+  const totValue = lastSummary.reduce((a,s)=>a+s.totalValue,0);
+  tf.innerHTML = `<tr><td colspan="3">TOTAL</td>
+    <td class="num">${fmtNum(totReceipt)}</td>
+    <td class="num">${fmtNum(totMinute)}</td>
+    <td class="num">${fmtNum(totReceipt? totMinute/totReceipt:0,1)}</td>
+    <td class="num">${fmtRp(totValue)}</td>
+    <td class="num">${fmtRp(totReceipt? totValue/totReceipt:0)}</td>
+    <td class="num"></td></tr>`;
+  $('dlSummary').disabled = false;
+}
+
+function renderProtTable(){
+  const tb = document.querySelector('#tblProt tbody');
+  const tf = document.querySelector('#tblProt tfoot');
+  $('protTag').textContent = lastProt.length + ' baris';
+  if (lastProt.length === 0){
+    tb.innerHTML = '<tr><td colspan="6" class="empty">Tidak ada transaksi Protection ditemukan untuk kode kasir & periode ini.</td></tr>';
+    tf.innerHTML = '';
+    $('dlProt').disabled = true;
+    return;
+  }
+  tb.innerHTML = lastProt.map(p => `<tr>
+    <td>${p.salesId}</td><td>${p.salesName}</td>
+    <td>${p.itemNo}</td><td>${p.itemName}</td>
+    <td class="num">${fmtNum(p.qty)}</td>
+    <td class="num">${fmtRp(p.value)}</td>
+  </tr>`).join('');
+  const totQty = lastProt.reduce((a,p)=>a+p.qty,0);
+  const totVal = lastProt.reduce((a,p)=>a+p.value,0);
+  tf.innerHTML = `<tr><td colspan="4">TOTAL</td><td class="num">${fmtNum(totQty)}</td><td class="num">${fmtRp(totVal)}</td></tr>`;
+  $('dlProt').disabled = false;
+}
+
+function renderCharts(){
+  // receipts per day, stacked by kasir (simplified: total receipts per day)
+  const byDate = new Map();
+  lastDaily.forEach(d=>{
+    if (!byDate.has(d.dateStr)) byDate.set(d.dateStr, 0);
+    byDate.set(d.dateStr, byDate.get(d.dateStr) + d.receipts);
+  });
+  const dates = Array.from(byDate.keys()).sort();
+  const receiptVals = dates.map(d=>byDate.get(d));
+
+  if (chartDaily) chartDaily.destroy();
+  chartDaily = new Chart($('chartReceiptPerDay'), {
+    type:'bar',
+    data:{ labels: dates, datasets:[{ label:'Total Receipt Unik', data: receiptVals, backgroundColor:'#2f6d5e' }]},
+    options:{ responsive:true, plugins:{title:{display:true, text:'Total Receipt Unik per Hari (semua kasir)'}, legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+  });
+
+  const protLabels = lastProt.map(p=>p.salesId.slice(-4)+' '+p.salesName.trim().split(' ')[0]);
+  const protVals = lastProt.map(p=>p.qty);
+  if (chartProt) chartProt.destroy();
+  chartProt = new Chart($('chartProtQty'), {
+    type:'bar',
+    data:{ labels: protLabels, datasets:[{ label:'Qty Protection', data: protVals, backgroundColor:'#a4472b' }]},
+    options:{ responsive:true, indexAxis:'y', plugins:{title:{display:true, text:'Qty Protection per Kasir'}, legend:{display:false}}, scales:{x:{beginAtZero:true}} }
+  });
+}
+
+/* ---------------- CSV DOWNLOAD ---------------- */
+function downloadCsv(filename, headers, rows){
+  const escape = v => {
+    v = (v===undefined||v===null) ? '' : String(v);
+    if (v.includes(',') || v.includes('"') || v.includes('\n')) return '"' + v.replace(/"/g,'""') + '"';
+    return v;
+  };
+  const lines = [headers.join(',')];
+  rows.forEach(r => lines.push(r.map(escape).join(',')));
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+$('dlDaily').addEventListener('click', ()=>{
+  downloadCsv('produktivitas_kasir_harian.csv',
+    ['Tanggal','Cashier ID','Nama Kasir','Receipt Unik','Total Waktu (mnt)','Rata2 Waktu per Receipt (mnt)','Total Value Receipt','Rata2 Value per Receipt'],
+    lastDaily.map(d=>[d.dateStr,d.cashierId,d.cashierName,d.receipts,d.totalMinute,(d.receipts? (d.totalMinute/d.receipts).toFixed(1):0),d.totalValue,(d.receipts? Math.round(d.totalValue/d.receipts):0)])
+  );
+});
+$('dlSummary').addEventListener('click', ()=>{
+  downloadCsv('ringkasan_produktivitas_kasir.csv',
+    ['Cashier ID','Nama Kasir','Hari Aktif','Total Receipt Unik','Total Waktu (mnt)','Rata2 Waktu per Receipt (mnt)','Total Value Receipt','Rata2 Value per Receipt','Receipt per Hari'],
+    lastSummary.map(s=>[s.cashierId,s.cashierName,s.hariAktif,s.receipts,s.totalMinute,(s.receipts?(s.totalMinute/s.receipts).toFixed(1):0),s.totalValue,(s.receipts?Math.round(s.totalValue/s.receipts):0),(s.hariAktif?(s.receipts/s.hariAktif).toFixed(1):0)])
+  );
+});
+$('dlProt').addEventListener('click', ()=>{
+  downloadCsv('transaksi_protection_kasir.csv',
+    ['Cashier ID','Nama Kasir','Item Code','Deskripsi','Total Qty','Total Value'],
+    lastProt.map(p=>[p.salesId,p.salesName,p.itemNo,p.itemName,p.qty,Math.round(p.value)])
+  );
+});
+</script>
+</body>
+</html>

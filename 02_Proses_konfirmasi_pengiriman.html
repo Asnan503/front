@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konfirmasi Pengiriman</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --navy:#0F1F3D;
+    --navy-2:#1B2E57;
+    --accent:#2F5CDE;
+    --accent-2:#5C7FE8;
+    --bg:#F4F6FB;
+    --surface:#FFFFFF;
+    --line:#E2E6F0;
+    --text:#101728;
+    --muted:#5A6478;
+    --good:#1B8A5A;
+    --warn:#C7871A;
+    --bad:#C0392B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Roboto','Space Grotesk',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#fff;
+    padding:28px 24px 22px;
+  }
+  header h1{
+    margin:0 0 4px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px;
+    font-weight:600;
+    letter-spacing:.2px;
+  }
+  header p{margin:0;font-size:13px;color:#C7D1EE;}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(16,23,40,.04);
+  }
+  .card h2{
+    font-size:15px;
+    margin:0 0 14px;
+    font-weight:600;
+    color:var(--navy);
+    display:flex;align-items:center;gap:8px;
+  }
+  .badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--accent);color:#fff;font-size:12px;font-weight:700;
+  }
+  .row{display:flex;flex-wrap:wrap;gap:14px;align-items:end;}
+  .field{display:flex;flex-direction:column;gap:6px;min-width:180px;}
+  .field label{font-size:12px;color:var(--muted);font-weight:600;}
+  input[type=file], input[type=date], select{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:13px;
+    background:#fff;
+    color:var(--text);
+    font-family:inherit;
+  }
+  button{
+    border:none;border-radius:10px;
+    padding:10px 18px;
+    font-size:13px;font-weight:600;
+    cursor:pointer;
+    font-family:inherit;
+    transition:filter .15s;
+  }
+  button:hover{filter:brightness(0.95);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-outline{background:#fff;color:var(--navy);border:1px solid var(--line);}
+  .btn-success{background:var(--good);color:#fff;}
+  .stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;}
+  .stat{
+    flex:1;min-width:130px;
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .stat .num{font-size:20px;font-weight:700;color:var(--navy);font-family:'Space Grotesk',sans-serif;}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead th{
+    background:var(--navy);
+    color:#fff;
+    text-align:left;
+    padding:10px 10px;
+    position:sticky;top:0;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  tbody tr:hover{background:#F8F9FD;}
+  td[contenteditable=true]{outline:none;}
+  td[contenteditable=true]:focus{background:#EEF2FF;box-shadow:inset 0 0 0 1.5px var(--accent);}
+  .table-scroll{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:12px;}
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+  .pill{
+    display:inline-block;padding:2px 8px;border-radius:20px;
+    font-size:10.5px;font-weight:700;background:#E9F5EE;color:var(--good);
+  }
+  .foot-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+  footer{
+    text-align:center;font-size:11px;color:var(--muted);padding:20px 0 40px;
+  }
+  .note{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .del-btn{background:none;border:none;color:var(--bad);cursor:pointer;font-size:14px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+  .tab-btn{
+    background:none;border:none;border-bottom:2.5px solid transparent;
+    padding:10px 4px;margin-right:18px;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-radius:0;
+  }
+  .tab-btn.active{color:var(--navy);border-bottom-color:var(--accent);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  select.ready-select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit;}
+  select.ready-select.rdy{color:var(--good);font-weight:700;}
+  select.ready-select.notrdy{color:var(--bad);font-weight:700;}
+  .chk-field{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Konfirmasi Pengiriman</h1>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2><span class="badge">1</span> Import Data (Update / Ganti Sumber Data)</h2>
+    <div class="row">
+      <div class="field" style="flex:2;min-width:260px;">
+        <label>File Report Outstanding (.xlsx)</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+      </div>
+      <div class="field">
+        <button class="btn-outline" id="btnReset" type="button">Reset Data</button>
+      </div>
+    </div>
+    <div class="note" id="fileStatus">Belum ada file dimuat. Silakan pilih file .xlsx Report Outstanding Nota Penjualan WMS dan NAV.</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-kirim" type="button">Konfirmasi Pengiriman</button>
+    <button class="tab-btn" data-tab="tab-stock" type="button">Konfirmasi Stock H-2</button>
+  </div>
+
+  <div id="tab-kirim" class="tab-panel active">
+
+  <div class="card">
+    <h2><span class="badge">2</span> Filter Laporan</h2>
+    <div class="row">
+      <div class="field">
+        <label>Tanggal Pengiriman (Promised Delivery Date)</label>
+        <input type="date" id="dateFilter">
+      </div>
+      <div class="field">
+        <button class="btn-primary" id="btnProcess" type="button">Proses Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge">3</span> Hasil — Data Konfirmasi Pengiriman</h2>
+    <div class="stats" id="statsBar" style="display:none;">
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total Baris Sumber</div></div>
+      <div class="stat"><div class="num" id="statFiltered">0</div><div class="lbl">Lolos Filter NPType</div></div>
+      <div class="stat"><div class="num" id="statAmsen">0</div><div class="lbl">Diabaikan (Amsen)</div></div>
+      <div class="stat"><div class="num" id="statGrouped">0</div><div class="lbl">Hasil Akhir (per Receipt)</div></div>
+    </div>
+
+    <div class="table-scroll" style="margin-top:14px;">
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>No Telpon</th>
+            <th>Nama Konsumen</th>
+            <th>Nomor Dokumen</th>
+            <th>No Receipt</th>
+            <th>Tanggal pengiriman</th>
+            <th>Jam operasional</th>
+            <th>Comment</th>
+            <th>StoreID</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="resultBody">
+          <tr><td colspan="9" class="empty">Belum ada data. Import file xlsx lalu pilih tanggal dan klik "Proses Data".</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot-actions">
+      <button class="btn-success" id="btnExport" disabled>⬇ Export CSV</button>
+    </div>
+  </div>
+
+  </div>
+  <!-- ===== END tab-kirim ===== -->
+
+  <div id="tab-stock" class="tab-panel">
+
+    <div class="card">
+      <h2><span class="badge">1</span> Filter Laporan Stock H-2</h2>
+      <div class="row">
+        <div class="field">
+          <label>Tanggal Data (Promise Delivery Date = Hari ini + 2)</label>
+          <input type="date" id="stockDateInput">
+        </div>
+        <div class="field">
+          <button class="btn-primary" id="btnProcessStock" type="button">Proses Data</button>
+        </div>
+        <div class="field chk-field" style="align-self:center;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
+            <input type="checkbox" id="chkOnlyOutstanding" checked>
+            Hanya tampilkan Outstanding Qty Base WMS &gt; 0
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="badge">2</span> Hasil — Konfirmasi Ketersediaan Stock Pengiriman H-2</h2>
+      <div class="stats" id="statsBarStock" style="display:none;">
+        <div class="stat"><div class="num" id="statStockTotal">0</div><div class="lbl">Baris Sesuai Tanggal</div></div>
+        <div class="stat"><div class="num" id="statStockShown">0</div><div class="lbl">Ditampilkan</div></div>
+      </div>
+
+      <div class="table-scroll" style="margin-top:14px;">
+        <table id="stockTable">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>NPno</th>
+              <th>Item No</th>
+              <th>Item Name</th>
+              <th>Ots Qty</th>
+              <th>Sales Person Name</th>
+              <th>Barang Ready/Tidak Ready</th>
+              <th>Ket</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="stockBody">
+            <tr><td colspan="9" class="empty">Belum ada data. Import file xlsx di atas, lalu klik "Proses Data".</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="foot-actions">
+        <button class="btn-success" id="btnExportStockXlsx" disabled>⬇ Export XLSX</button>
+        <button class="btn-success" id="btnExportStockPdf" disabled>⬇ Export PDF</button>
+      </div>
+    </div>
+
+  </div>
+  <!-- ===== END tab-stock ===== -->
+
+  <footer>© <span id="yr"></span> Powered by Support Back TLC</footer>
+</div>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// ---- Tab switching ----
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---- Default stock date = today + 2 ----
+function todayPlus2Iso(){
+  const now = new Date();
+  now.setDate(now.getDate() + 2);
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+document.getElementById('stockDateInput').value = todayPlus2Iso();
+
+let rawRows = [];   // all data rows from sheet, as objects keyed by header
+let headerMap = {}; // column name -> index
+const ALLOWED_NPTYPE = [
+  'delivery gudang store (indent supplier)',
+  'delivery gudang store (indent another store/dc)',
+  'cash&delivery via gudang store',
+  'delivery gudang store(indent supplier)',
+  'delivery gudang store(indent another store/dc)'
+];
+
+function normType(s){
+  return (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');
+}
+function isAllowedType(s){
+  const n = normType(s);
+  return ALLOWED_NPTYPE.includes(n);
+}
+function hasAmsen(...vals){
+  return vals.some(v => (v||'').toString().toLowerCase().includes('amsen'));
+}
+
+// Parse a date string like "12-07-2026" (DD-MM-YYYY) into {d,m,y} and a sortable key
+function parseDMY(str){
+  if(!str) return null;
+  const s = str.toString().trim();
+  const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if(m){
+    return { d: parseInt(m[1],10), m: parseInt(m[2],10), y: parseInt(m[3],10) };
+  }
+  // fallback: try Date parse (in case Excel gave a real date)
+  const d2 = new Date(s);
+  if(!isNaN(d2)){
+    return { d: d2.getDate(), m: d2.getMonth()+1, y: d2.getFullYear() };
+  }
+  return null;
+}
+function dmyKey(o){ return o ? (o.y*10000 + o.m*100 + o.d) : -1; }
+function dmyIso(o){ return o ? `${o.y}-${String(o.m).padStart(2,'0')}-${String(o.d).padStart(2,'0')}` : ''; }
+function dmyDDMMYYYY(o){ return o ? `${String(o.d).padStart(2,'0')}${String(o.m).padStart(2,'0')}${o.y}` : ''; }
+
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function formatTanggalIndo(o){
+  if(!o) return '';
+  const jsDate = new Date(o.y, o.m-1, o.d);
+  const hari = HARI[jsDate.getDay()];
+  return `${hari}, ${o.d} ${BULAN[o.m]} ${o.y}`;
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, {type:'array', cellDates:false});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+
+      // find header row: first cell === 'Site ID'
+      let headerRowIdx = -1;
+      for(let i=0;i<rows.length;i++){
+        if((rows[i][0]||'').toString().trim() === 'Site ID'){ headerRowIdx = i; break; }
+      }
+      if(headerRowIdx === -1){
+        document.getElementById('fileStatus').innerHTML = '⚠️ Format file tidak dikenali — header "Site ID" tidak ditemukan.';
+        return;
+      }
+      const header = rows[headerRowIdx].map(h => (h||'').toString().trim());
+      headerMap = {};
+      header.forEach((h,i) => headerMap[h]=i);
+
+      rawRows = [];
+      for(let i=headerRowIdx+1;i<rows.length;i++){
+        const r = rows[i];
+        if(!r || !r[headerMap['Site ID']]) continue;
+        rawRows.push(r);
+      }
+
+      document.getElementById('fileStatus').innerHTML =
+        `✅ File dimuat: <strong>${file.name}</strong> — ${rawRows.length} baris data ditemukan.`;
+
+      resetResultTable();
+    }catch(err){
+      console.error(err);
+      document.getElementById('fileStatus').innerHTML = '⚠️ Gagal membaca file: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  rawRows = [];
+  headerMap = {};
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileStatus').textContent = 'Belum ada file dimuat. Silakan pilih file .xlsx Report Outstanding Nota Penjualan WMS dan NAV.';
+  document.getElementById('dateFilter').value = '';
+  resetResultTable();
+});
+
+function resetResultTable(){
+  document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" class="empty">Belum ada data. Import file xlsx lalu pilih tanggal dan klik "Proses Data".</td></tr>';
+  document.getElementById('statsBar').style.display = 'none';
+  document.getElementById('btnExport').disabled = true;
+  resetStockTable();
+}
+
+function resetStockTable(){
+  document.getElementById('stockBody').innerHTML = '<tr><td colspan="9" class="empty">Belum ada data. Import file xlsx di atas, lalu klik "Proses Data".</td></tr>';
+  document.getElementById('statsBarStock').style.display = 'none';
+  document.getElementById('btnExportStockXlsx').disabled = true;
+  document.getElementById('btnExportStockPdf').disabled = true;
+}
+
+let currentDateObj = null;
+
+document.getElementById('btnProcess').addEventListener('click', function(){
+  if(!rawRows.length){
+    alert('Silakan import file xlsx terlebih dahulu.');
+    return;
+  }
+  const iso = document.getElementById('dateFilter').value;
+  if(!iso){
+    alert('Silakan pilih tanggal pengiriman (laporan) terlebih dahulu.');
+    return;
+  }
+  const [y,m,d] = iso.split('-').map(Number);
+  currentDateObj = {y, m, d};
+  const targetKey = dmyKey(currentDateObj);
+
+  let total = 0, passedType = 0, ignoredAmsen = 0;
+  const groups = new Map(); // receiptNo -> group data
+
+  rawRows.forEach(r => {
+    const get = (col) => (r[headerMap[col]] || '').toString().trim();
+    const promDate = parseDMY(get('Promised Delievery Date'));
+    if(!promDate || dmyKey(promDate) !== targetKey) return;
+
+    total++;
+
+    const npType = get('NPType');
+    const comment = get('Comment');
+    const addr1 = get('Sell To Address');
+    const addr2 = get('Sell To Address 2');
+
+    if(!isAllowedType(npType)) return;
+    passedType++;
+
+    if(hasAmsen(comment, addr1, addr2)){
+      ignoredAmsen++;
+      return;
+    }
+
+    const receipt = get('Receipt No');
+    if(!receipt) return;
+
+    if(!groups.has(receipt)){
+      groups.set(receipt, {
+        phone: get('Phone No'),
+        name: get('Customer Name'),
+        receipt: receipt,
+        npnos: new Set(),
+        comments: new Set(),
+        dateObj: promDate,
+        storeId: get('Site ID') || '11000'
+      });
+    }
+    const g = groups.get(receipt);
+    const npno = get('NPno');
+    if(npno) g.npnos.add(npno);
+    if(comment) g.comments.add(comment);
+  });
+
+  // Build final rows
+  const finalRows = [];
+  groups.forEach(g => {
+    // sort NPnos descending, first full, rest last-3-digits if same length/prefix
+    const arr = Array.from(g.npnos).sort((a,b)=> b.localeCompare(a));
+    let nomorDok = '';
+    if(arr.length){
+      nomorDok = arr[0];
+      for(let i=1;i<arr.length;i++){
+        const cur = arr[i];
+        const prev = arr[0];
+        if(cur.length === prev.length){
+          // find how many trailing chars differ; default to last 3
+          let suffixLen = 3;
+          nomorDok += ' & ' + cur.slice(-suffixLen);
+        } else {
+          nomorDok += ' & ' + cur;
+        }
+      }
+    }
+    finalRows.push({
+      phone: g.phone,
+      name: g.name,
+      doc: nomorDok,
+      receipt: g.receipt,
+      dateStr: formatTanggalIndo(g.dateObj),
+      jam: '08.00-21.00',
+      comment: Array.from(g.comments).join('; '),
+      storeId: '11000'
+    });
+  });
+
+  // sort by receipt no for stable display
+  finalRows.sort((a,b)=> a.receipt.localeCompare(b.receipt));
+
+  renderTable(finalRows);
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statFiltered').textContent = passedType;
+  document.getElementById('statAmsen').textContent = ignoredAmsen;
+  document.getElementById('statGrouped').textContent = finalRows.length;
+  document.getElementById('statsBar').style.display = 'flex';
+
+  document.getElementById('btnExport').disabled = finalRows.length === 0;
+});
+
+function renderTable(rows){
+  const body = document.getElementById('resultBody');
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="9" class="empty">Tidak ada data yang cocok untuk tanggal ini.</td></tr>';
+    return;
+  }
+  body.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(row.phone)}</td>
+      <td>${escapeHtml(row.name)}</td>
+      <td>${escapeHtml(row.doc)}</td>
+      <td>${escapeHtml(row.receipt)}</td>
+      <td>${escapeHtml(row.dateStr)}</td>
+      <td>${escapeHtml(row.jam)}</td>
+      <td contenteditable="true" data-field="comment">${escapeHtml(row.comment)}</td>
+      <td>${escapeHtml(row.storeId)}</td>
+      <td><button class="del-btn" title="Hapus baris">✕</button></td>
+    `;
+    tr.querySelector('.del-btn').addEventListener('click', () => tr.remove());
+    body.appendChild(tr);
+  });
+}
+
+function escapeHtml(s){
+  return (s===undefined||s===null?'':s.toString())
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function csvEscape(val){
+  const s = (val===undefined||val===null) ? '' : val.toString();
+  if(/[",\n\r]/.test(s)){
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+  return s;
+}
+
+document.getElementById('btnExport').addEventListener('click', function(){
+  const body = document.getElementById('resultBody');
+  const trs = body.querySelectorAll('tr');
+  if(!trs.length || body.querySelector('.empty')) return;
+
+  const header = ['No Telpon','Nama Konsumen','Nomor Dokumen','No Receipt','Tanggal pengiriman','Jam operasional','Comment','StoreID'];
+  const lines = [header.map(csvEscape).join(',')];
+
+  trs.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length < 8) return;
+    const vals = [
+      tds[0].textContent.trim(),
+      tds[1].textContent.trim(),
+      tds[2].textContent.trim(),
+      tds[3].textContent.trim(),
+      tds[4].textContent.trim(),
+      tds[5].textContent.trim(),
+      tds[6].textContent.trim(),
+      tds[7].textContent.trim()
+    ];
+    lines.push(vals.map(csvEscape).join(','));
+  });
+
+  const csvContent = lines.join('\r\n');
+  const blob = new Blob(['\uFEFF' + csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const fname = `Konfirmasi_Pengiriman_TLC_${dmyDDMMYYYY(currentDateObj)}_1.csv`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ============================================================
+   TAB 2 — KONFIRMASI KETERSEDIAAN STOCK PENGIRIMAN H-2
+   ============================================================ */
+let currentStockDateObj = null;
+let stockRowsData = [];
+let stockIdCounter = 0;
+
+document.getElementById('btnProcessStock').addEventListener('click', function(){
+  if(!rawRows.length){
+    alert('Silakan import file xlsx terlebih dahulu.');
+    return;
+  }
+  const iso = document.getElementById('stockDateInput').value;
+  if(!iso){
+    alert('Silakan pilih tanggal data.');
+    return;
+  }
+  const [y,m,d] = iso.split('-').map(Number);
+  currentStockDateObj = {y, m, d};
+  const targetKey = dmyKey(currentStockDateObj);
+  const onlyOutstanding = document.getElementById('chkOnlyOutstanding').checked;
+
+  let total = 0;
+  const out = [];
+
+  rawRows.forEach(r => {
+    const get = (col) => (r[headerMap[col]] !== undefined ? r[headerMap[col]] : '');
+    const promDate = parseDMY((get('Promised Delievery Date')||'').toString().trim());
+    if(!promDate || dmyKey(promDate) !== targetKey) return;
+    total++;
+
+    const outstandingRaw = get('Outstanding Qty Base WMS');
+    const outstandingNum = parseFloat(outstandingRaw) || 0;
+    if(onlyOutstanding && outstandingNum <= 0) return;
+
+    out.push({
+      _id: ++stockIdCounter,
+      customer: (get('Customer Name')||'').toString().trim(),
+      npno: (get('NPno')||'').toString().trim(),
+      itemNo: (get('Item No')||'').toString().trim(),
+      itemName: (get('Item Name')||'').toString().trim(),
+      qty: outstandingNum,
+      sales: (get('Sales Person Name')||'').toString().trim(),
+      ready: '',
+      ket: ''
+    });
+  });
+
+  // sort so identical customer names are grouped consecutively (for merge)
+  out.sort((a,b) => a.customer.localeCompare(b.customer, 'id'));
+
+  stockRowsData = out;
+  renderStockTable();
+
+  document.getElementById('statStockTotal').textContent = total;
+  document.getElementById('statsBarStock').style.display = 'flex';
+});
+
+// compute consecutive groups of same customer name -> [{start, count}]
+function computeCustomerGroups(rows){
+  const groups = [];
+  let i = 0;
+  while(i < rows.length){
+    let j = i + 1;
+    while(j < rows.length && rows[j].customer === rows[i].customer) j++;
+    groups.push({ start: i, count: j - i });
+    i = j;
+  }
+  return groups;
+}
+
+function renderStockTable(){
+  const body = document.getElementById('stockBody');
+  const rows = stockRowsData;
+
+  document.getElementById('statStockShown').textContent = rows.length;
+  document.getElementById('btnExportStockXlsx').disabled = rows.length === 0;
+  document.getElementById('btnExportStockPdf').disabled = rows.length === 0;
+
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="9" class="empty">Tidak ada data yang cocok untuk tanggal ini.</td></tr>';
+    return;
+  }
+
+  const groups = computeCustomerGroups(rows);
+  const groupStartSet = new Map(); // start idx -> count
+  groups.forEach(g => groupStartSet.set(g.start, g.count));
+
+  body.innerHTML = '';
+  rows.forEach((row, k) => {
+    const tr = document.createElement('tr');
+    tr.dataset.id = row._id;
+
+    let custCell = '';
+    if(groupStartSet.has(k)){
+      const span = groupStartSet.get(k);
+      custCell = `<td${span>1 ? ' rowspan="'+span+'"' : ''}>${escapeHtml(row.customer)}</td>`;
+    }
+    // rows that are continuation of a merged group get no customer cell at all
+
+    tr.innerHTML = custCell + `
+      <td>${escapeHtml(row.npno)}</td>
+      <td>${escapeHtml(row.itemNo)}</td>
+      <td>${escapeHtml(row.itemName)}</td>
+      <td>${row.qty}</td>
+      <td>${escapeHtml(row.sales)}</td>
+      <td>
+        <select class="ready-select">
+          <option value="">— pilih —</option>
+          <option value="Ready"${row.ready==='Ready'?' selected':''}>Ready</option>
+          <option value="Tidak Ready"${row.ready==='Tidak Ready'?' selected':''}>Tidak Ready</option>
+        </select>
+      </td>
+      <td contenteditable="true" data-field="ket">${escapeHtml(row.ket)}</td>
+      <td><button class="del-btn" title="Hapus baris">✕</button></td>
+    `;
+
+    const sel = tr.querySelector('select');
+    if(row.ready==='Ready') sel.classList.add('rdy');
+    if(row.ready==='Tidak Ready') sel.classList.add('notrdy');
+    sel.addEventListener('change', () => {
+      row.ready = sel.value;
+      sel.classList.remove('rdy','notrdy');
+      if(sel.value === 'Ready') sel.classList.add('rdy');
+      if(sel.value === 'Tidak Ready') sel.classList.add('notrdy');
+    });
+
+    const ketCell = tr.querySelector('[data-field="ket"]');
+    ketCell.addEventListener('input', () => { row.ket = ketCell.textContent.trim(); });
+
+    tr.querySelector('.del-btn').addEventListener('click', () => {
+      const idx = stockRowsData.findIndex(x => x._id === row._id);
+      if(idx > -1) stockRowsData.splice(idx, 1);
+      renderStockTable();
+    });
+
+    body.appendChild(tr);
+  });
+}
+
+const STOCK_HEADER = ['Customer Name','NPno','Item No','Item Name','Ots Qty','Sales Person Name','Barang Ready/Tidak Ready','Ket'];
+
+document.getElementById('btnExportStockXlsx').addEventListener('click', function(){
+  const rows = stockRowsData;
+  if(!rows.length) return;
+
+  const title = 'Konfirmasi Ketersediaan Stock Pengiriman H -2';
+  const subtitle = 'Promise Delivery Date : ' + formatTanggalIndo(currentStockDateObj);
+  const groups = computeCustomerGroups(rows);
+  const groupStartSet = new Map();
+  groups.forEach(g => groupStartSet.set(g.start, g.count));
+
+  const dataRows = rows.map((row, k) => [
+    groupStartSet.has(k) ? row.customer : '',
+    row.npno, row.itemNo, row.itemName, row.qty, row.sales, row.ready, row.ket
+  ]);
+
+  const aoa = [
+    [title],
+    [subtitle],
+    [],
+    STOCK_HEADER,
+    ...dataRows
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const merges = [
+    { s:{r:0,c:0}, e:{r:0,c:STOCK_HEADER.length-1} },
+    { s:{r:1,c:0}, e:{r:1,c:STOCK_HEADER.length-1} }
+  ];
+  const HEADER_ROWS = 4; // title, subtitle, blank, header -> data starts at row index 4
+  groups.forEach(g => {
+    if(g.count > 1){
+      merges.push({ s:{r:HEADER_ROWS+g.start, c:0}, e:{r:HEADER_ROWS+g.start+g.count-1, c:0} });
+    }
+  });
+  ws['!merges'] = merges;
+  ws['!cols'] = [
+    {wch:26},{wch:22},{wch:14},{wch:42},{wch:10},{wch:22},{wch:20},{wch:28}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Konfirmasi Stock H-2');
+  const fname = `Konfirmasi_Stock_H-2_${dmyDDMMYYYY(currentStockDateObj)}.xlsx`;
+  XLSX.writeFile(wb, fname);
+});
+
+document.getElementById('btnExportStockPdf').addEventListener('click', function(){
+  const rows = stockRowsData;
+  if(!rows.length) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+  const title = 'Konfirmasi Ketersediaan Stock Pengiriman H -2';
+  const subtitle = 'Promise Delivery Date : ' + formatTanggalIndo(currentStockDateObj);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text(title, 40, 36);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text(subtitle, 40, 52);
+
+  const groups = computeCustomerGroups(rows);
+  const groupStartSet = new Map();
+  groups.forEach(g => groupStartSet.set(g.start, g.count));
+
+  const body = rows.map((row, k) => {
+    const rest = [row.npno, row.itemNo, row.itemName, row.qty, row.sales, row.ready, row.ket];
+    if(groupStartSet.has(k)){
+      const span = groupStartSet.get(k);
+      const custCell = span > 1 ? { content: row.customer, rowSpan: span } : row.customer;
+      return [custCell, ...rest];
+    }
+    // continuation row of a merged group: omit the customer cell entirely
+    return rest;
+  });
+
+  doc.autoTable({
+    head: [STOCK_HEADER],
+    body: body,
+    startY: 64,
+    theme: 'grid',
+    styles: {
+      fontSize: 8.5,
+      cellPadding: 4,
+      lineColor: [220,220,220],
+      lineWidth: 0.5,
+      fillColor: [255,255,255],
+      textColor: [20,20,20],
+      valign: 'middle'
+    },
+    headStyles: {
+      fillColor: [255,255,255],
+      textColor: [15,31,61],
+      fontStyle: 'bold',
+      lineColor: [180,180,180],
+      lineWidth: 0.7
+    },
+    alternateRowStyles: { fillColor: [255,255,255] },
+    margin: { left: 40, right: 40 }
+  });
+
+  const fname = `Konfirmasi_Stock_H-2_${dmyDDMMYYYY(currentStockDateObj)}.pdf`;
+  doc.save(fname);
+});
+</script>
+</body>
+</html>

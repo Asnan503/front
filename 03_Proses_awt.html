@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sedang Dalam Perbaikan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#12181B;
+    --paper:#EEF1EE;
+    --amber:#E8A33D;
+    --amber-dim:#B97F26;
+    --line:#2A3236;
+    --muted:#6B7680;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    height:100%;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Space Grotesk',sans-serif;
+    overflow:hidden;
+  }
+
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:24px;
+  }
+
+  /* diagonal hazard band, restrained - top and bottom only */
+  .hazard{
+    position:fixed;
+    left:0;right:0;
+    height:14px;
+    background:repeating-linear-gradient(
+      135deg,
+      var(--amber),
+      var(--amber) 18px,
+      var(--ink) 18px,
+      var(--ink) 36px
+    );
+    z-index:2;
+  }
+  .hazard.top{top:0;}
+  .hazard.bottom{bottom:0;}
+
+  .grid-bg{
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:48px 48px;
+    opacity:0.3;
+    mask-image:radial-gradient(circle at center, black 0%, transparent 75%);
+    animation:drift 22s linear infinite;
+  }
+
+  @keyframes drift{
+    0%{background-position:0 0, 0 0;}
+    100%{background-position:48px 96px, 48px 96px;}
+  }
+
+  .orb{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(90px);
+    z-index:0;
+    pointer-events:none;
+  }
+  .orb.amber{
+    width:520px;height:520px;
+    top:-160px;left:-120px;
+    background:radial-gradient(circle, var(--amber) 0%, transparent 70%);
+    opacity:0.35;
+    animation:float1 14s ease-in-out infinite;
+  }
+  .orb.teal{
+    width:460px;height:460px;
+    bottom:-140px;right:-100px;
+    background:radial-gradient(circle, #2E8C8C 0%, transparent 70%);
+    opacity:0.3;
+    animation:float2 18s ease-in-out infinite;
+  }
+
+  @keyframes float1{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(40px,60px) scale(1.1);}
+  }
+  @keyframes float2{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(-30px,-40px) scale(1.08);}
+  }
+
+  .scanline{
+    position:fixed;
+    left:0;right:0;
+    height:140px;
+    background:linear-gradient(to bottom, transparent, rgba(232,163,61,0.08), transparent);
+    z-index:1;
+    animation:sweep 7s ease-in-out infinite;
+    pointer-events:none;
+  }
+
+  @keyframes sweep{
+    0%{top:-140px;}
+    100%{top:100%;}
+  }
+
+  .grain{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    opacity:0.05;
+    pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .grid-bg, .orb, .scanline, .wave{animation:none;}
+  }
+
+  .panel{
+    position:relative;
+    z-index:3;
+    max-width:640px;
+    width:100%;
+    text-align:center;
+  }
+
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--amber);
+    border:1px solid var(--amber-dim);
+    padding:6px 14px;
+    border-radius:2px;
+    margin-bottom:32px;
+  }
+
+  .tag .dot{
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--amber);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:0.35; transform:scale(0.8);}
+  }
+
+  h1{
+    font-size:clamp(2.4rem, 6vw, 4rem);
+    font-weight:700;
+    line-height:1.05;
+    letter-spacing:-0.02em;
+    margin-bottom:20px;
+  }
+
+  h1 .accent{color:var(--amber);}
+
+  .sub{
+    font-size:1.05rem;
+    line-height:1.6;
+    color:#C7CDD0;
+    max-width:480px;
+    margin:0 auto 40px;
+  }
+
+  .sub strong{color:var(--paper); font-weight:600;}
+
+  .divider{
+    width:100%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent);
+    margin-bottom:32px;
+  }
+
+  .footer-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    letter-spacing:0.03em;
+  }
+
+  .footer-line .thanks{
+    display:block;
+    margin-top:10px;
+    font-size:16px;
+    color:var(--amber);
+    font-weight:500;
+    letter-spacing:0.05em;
+  }
+
+  .footer-line .credit{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    margin-top:10px;
+    font-size:13px;
+    color:var(--muted);
+    letter-spacing:0.03em;
+  }
+
+  .wave{
+    display:inline-block;
+    font-size:16px;
+    transform-origin:70% 70%;
+    animation:wave 2.2s ease-in-out infinite;
+  }
+
+  @keyframes wave{
+    0%,60%,100%{transform:rotate(0deg);}
+    10%{transform:rotate(14deg);}
+    20%{transform:rotate(-8deg);}
+    30%{transform:rotate(14deg);}
+    40%{transform:rotate(-4deg);}
+    50%{transform:rotate(10deg);}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .tag .dot{animation:none;}
+  }
+
+  @media (max-width:480px){
+    .hazard{height:10px;}
+    h1{font-size:2rem;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="hazard top"></div>
+  <div class="hazard bottom"></div>
+  <div class="orb amber"></div>
+  <div class="orb teal"></div>
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <div class="grain"></div>
+
+  <main class="panel">
+    <span class="tag"><span class="dot"></span>Under Maintenance</span>
+
+    <h1>Website Sedang<br><span class="accent">Dalam Perbaikan</span></h1>
+
+    <p class="sub">
+      Report ini sementara ditutup.
+    </p>
+
+    <div class="divider"></div>
+
+    <p class="footer-line">
+      <span class="thanks">Terima kasih.</span>
+      <span class="credit">by Support Back TLC <span class="wave">👋</span></span>
+    </p>
+  </main>
+
+</body>
+</html>

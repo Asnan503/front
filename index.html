@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Proses Laporan Front</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mist:#F5FAFA;
+    --panel:#FFFFFF;
+    --ink:#12333F;
+    --ink-soft:#4C6B75;
+    --teal:#177E8C;
+    --teal-deep:#0E5560;
+    --coral:#FF8A5B;
+    --coral-soft:#FFE3D3;
+    --aqua-pale:#E1F1F1;
+    --sun:#FFC857;
+    --line:#D9E9E9;
+    --radius:18px;
+    --shadow: 0 20px 44px -28px rgba(18,51,63,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--mist);
+    background-image:
+      radial-gradient(circle at 10% -10%, rgba(23,126,140,0.10), transparent 45%),
+      radial-gradient(circle at 100% 0%, rgba(255,138,91,0.10), transparent 40%);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 28px 80px;
+  }
+
+  /* ===== Top bar ===== */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:26px 28px;
+    max-width:1080px;
+    margin:0 auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--coral);
+    box-shadow:0 0 0 4px var(--coral-soft);
+  }
+  .clock-pill{
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    color:var(--teal-deep);
+    background:var(--aqua-pale);
+    border:1px solid var(--line);
+    padding:6px 14px;
+    border-radius:999px;
+  }
+
+  h1.page-title{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:clamp(28px, 4vw, 40px);
+    line-height:1.1;
+    margin:8px 0 0;
+    color:var(--teal-deep);
+  }
+  .page-sub{
+    margin:10px 0 0;
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:560px;
+  }
+
+  /* ===== Hero: CS welcome banner ===== */
+  .hero{
+    position:relative;
+    margin-top:26px;
+    border-radius:24px;
+    padding:36px 34px;
+    background:linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
+    color:#EAF7F6;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    gap:28px;
+    box-shadow:var(--shadow);
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    right:-60px; top:-60px;
+    width:220px; height:220px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,200,87,0.35), transparent 70%);
+  }
+  .hero::after{
+    content:"";
+    position:absolute;
+    left:-40px; bottom:-70px;
+    width:180px; height:180px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,138,91,0.28), transparent 70%);
+  }
+
+  .headset{
+    flex:none;
+    width:86px; height:86px;
+    position:relative;
+    z-index:1;
+  }
+  .headset svg{width:100%;height:100%;display:block;}
+
+  .hero-copy{position:relative; z-index:1;}
+  .greeting-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    padding:6px 12px;
+    border-radius:999px;
+    margin-bottom:12px;
+  }
+  .greeting-tag .pulse{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--sun);
+    box-shadow:0 0 0 0 rgba(255,200,87,0.6);
+    animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(255,200,87,0.55);}
+    70%{box-shadow:0 0 0 9px rgba(255,200,87,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,200,87,0);}
+  }
+
+  .hero h2{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:clamp(22px, 3vw, 30px);
+    margin:0 0 8px;
+    color:#fff;
+  }
+  .hero p{
+    margin:0;
+    color:#D9EFEE;
+    font-size:14.5px;
+    max-width:480px;
+    line-height:1.6;
+  }
+
+  /* ===== Section label ===== */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin:44px 0 18px;
+  }
+  .section-head h3{
+    font-family:'Inter', sans-serif;
+    font-size:12.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--teal-deep);
+    margin:0;
+  }
+  .section-head span{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+  }
+
+  /* ===== Ticket cards ===== */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:18px;
+  }
+
+  .ticket{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 22px 20px;
+    text-decoration:none;
+    color:var(--ink);
+    isolation:isolate;
+    overflow:hidden;
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    opacity:0;
+    transform:translateY(10px);
+    animation:rise .5s ease forwards;
+  }
+  .ticket:nth-child(1){animation-delay:.05s;}
+  .ticket:nth-child(2){animation-delay:.12s;}
+  .ticket:nth-child(3){animation-delay:.19s;}
+  .ticket:nth-child(4){animation-delay:.26s;}
+  .ticket:nth-child(5){animation-delay:.33s;}
+
+  @keyframes rise{
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .ticket::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    background:var(--accent, var(--teal));
+    transition:width .22s ease;
+  }
+  .ticket:hover{
+    transform:translateY(-4px);
+    box-shadow:var(--shadow);
+    border-color:transparent;
+  }
+  .ticket:hover::before{width:6px;}
+  .ticket:focus-visible{
+    outline:3px solid var(--coral);
+    outline-offset:2px;
+  }
+
+  .ticket-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .ticket-num{
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    color:var(--ink-soft);
+    background:var(--aqua-pale);
+    border-radius:8px;
+    padding:3px 8px;
+  }
+  .ticket-icon{
+    width:38px; height:38px;
+    border-radius:11px;
+    background:var(--accent-soft, var(--aqua-pale));
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .ticket-icon svg{width:20px;height:20px;stroke:var(--accent, var(--teal));}
+
+  .ticket h4{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:19px;
+    margin:2px 0 0;
+    color:var(--ink);
+  }
+  .ticket p{
+    margin:0;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    line-height:1.55;
+  }
+  .ticket-foot{
+    margin-top:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-family:'Inter', sans-serif;
+    font-size:12px;
+    color:var(--accent, var(--teal));
+    padding-top:10px;
+    border-top:1px dashed var(--line);
+  }
+  .ticket-foot .arrow{
+    transition:transform .2s ease;
+  }
+  .ticket:hover .ticket-foot .arrow{transform:translateX(4px);}
+
+  footer{
+    margin-top:56px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+  }
+
+  @media (max-width:560px){
+    .hero{flex-direction:column; align-items:flex-start;}
+    .topbar{flex-direction:column; align-items:flex-start; gap:10px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> Support front Tallasacity</div>
+    <div class="clock-pill" id="clock">--:--</div>
+  </div>
+
+  <div class="wrap">
+
+    <h1 class="page-title">Dashboard Proses Laporan Front</h1>
+    <p class="page-sub">Kumpulan tools laporan harian untuk tim front &mdash; dari closing kasir sampai rekap omset region.</p>
+
+    <section class="hero">
+      <div class="headset">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 8C18 8 8 19 8 32v10a6 6 0 0 0 6 6h2a4 4 0 0 0 4-4V34a4 4 0 0 0-4-4H10C11 20 20 12 32 12s21 8 22 18h-6a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h2a6 6 0 0 0 6-6V32C56 19 46 8 32 8Z" stroke="#EAF7F6" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M46 52c0 3.3-6.3 6-14 6" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="hero-copy">
+        <span class="greeting-tag"><span class="pulse"></span> Siap melayani</span>
+        <h2>Selamat datang kembali di meja front! 👋</h2>
+        <p>Semua proses laporan sudah rapi dalam satu tempat. Pilih kartu di bawah untuk langsung membuka form yang kamu butuhkan.</p>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <h3>Daftar Laporan</h3>
+      <span>5 entry</span>
+    </div>
+
+    <div class="grid">
+
+      <a class="ticket" style="--accent:#177E8C; --accent-soft:#E1F1F1" href="01_Report_jam_closing.html">
+        <div class="ticket-top">
+          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+          <span class="ticket-num">01</span>
+        </div>
+        <h4>Report 2 Jam &amp; Closing</h4>
+        <p>Rekap laporan berkala setiap 2 jam beserta laporan closing harian.</p>
+        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
+      </a>
+
+      <a class="ticket" style="--accent:#FF8A5B; --accent-soft:#FFE3D3" href="02_Proses_konfirmasi_pengiriman.html">
+        <div class="ticket-top">
+          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg></div>
+          <span class="ticket-num">02</span>
+        </div>
+        <h4>Konfirmasi Pengiriman</h4>
+        <p>Proses konfirmasi status pengiriman pesanan ke pelanggan.</p>
+        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
+      </a>
+
+      <a class="ticket" style="--accent:#0E5560; --accent-soft:#DCEEEF" href="03_Proses_awt.html">
+        <div class="ticket-top">
+          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 4v5h5"/></svg></div>
+          <span class="ticket-num">03</span>
+        </div>
+        <h4>AWT Closing</h4>
+        <p>Proses administrasi AWT saat closing toko.</p>
+        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
+      </a>
+
+      <a class="ticket" style="--accent:#C2610F; --accent-soft:#FFE3D3" href="04_protection_kasir.html">
+        <div class="ticket-top">
+          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.2 7.6-7 9-3.8-1.4-7-4-7-9V6z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg></div>
+          <span class="ticket-num">04</span>
+        </div>
+        <h4>Protection Kasir</h4>
+        <p>Check Penjualan Proteksi Kasir</p>
+        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
+      </a>
+
+      <a class="ticket" style="--accent:#177E8C; --accent-soft:#E1F1F1" href="05_Rekap_omset_region.html">
+        <div class="ticket-top">
+          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>
+          <span class="ticket-num">05</span>
+        </div>
+        <h4>Rekap Omset Region 6</h4>
+        <p>Rekapitulasi omset penjualan untuk seluruh Region 6.</p>
+        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
+      </a>
+
+    </div>
+
+    <footer>
+      <span>Dashboard Proses Laporan Front</span>
+      <span>Front Ops Team</span>
+    </footer>
+
+  </div>
+
+<script>
+  function tick(){
+    var d = new Date();
+    var h = String(d.getHours()).padStart(2,'0');
+    var m = String(d.getMinutes()).padStart(2,'0');
+    var el = document.getElementById('clock');
+    if(el) el.textContent = h + ':' + m;
+  }
+  tick();
+  setInterval(tick, 1000*30);
+</script>
+
+</body>
+</html>

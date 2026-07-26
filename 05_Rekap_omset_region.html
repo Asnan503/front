@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Rekap Laporan Region 6</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-6 font-sans">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="bg-blue-900 border border-blue-900 rounded-xl p-5 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid me-2 fa-chart-line"></i> Dashboard Regional 6 Mitra10
+        </h1>
+        <p class="text-blue-200 text-sm">Rekapitulasi Otomatis Laporan WA Pertoko</p>
+      </div>
+      
+      <!-- Date & Time Inputs -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div>
+          <label class="block text-xs text-blue-200 mb-1">Tanggal</label>
+          <input type="text" id="reportDate" class="bg-blue-800 border border-blue-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:outline-none focus:border-white focus:ring-1 focus:ring-white placeholder-blue-300">
+        </div>
+        <div>
+          <label class="block text-xs text-blue-200 mb-1">Pukul / Jam</label>
+          <input type="text" id="reportTime" value="18.00" class="bg-blue-800 border border-blue-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono w-24 focus:outline-none focus:border-white focus:ring-1 focus:ring-white placeholder-blue-300">
+        </div>
+        <div class="self-end">
+          <button onclick="processAllStores()" class="bg-white hover:bg-blue-50 text-blue-900 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-calculator"></i> Hitung Rekap
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Review & Edit Table (Above Output) -->
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-1 mb-3">
+        <h2 class="text-lg font-semibold text-blue-900">
+          <i class="fa-solid fa-table-list me-2"></i> Tabel Cek &amp; Edit Data
+        </h2>
+        <span class="text-xs text-slate-400">Nilai diambil otomatis dari paste WA. Jika ada yang salah, edit langsung di sini — Output Laporan akan ikut ter-update.</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs border-collapse min-w-[900px]" id="reviewTable">
+          <thead>
+            <tr class="bg-blue-900 text-white">
+              <th class="p-2 text-left rounded-l-lg">Toko</th>
+              <th class="p-2 text-right">Target (T)</th>
+              <th class="p-2 text-right">Actual (A)</th>
+              <th class="p-2 text-center">%</th>
+              <th class="p-2 text-right">LY</th>
+              <th class="p-2 text-right">MTD Target</th>
+              <th class="p-2 text-right">MTD Actual</th>
+              <th class="p-2 text-center">%</th>
+              <th class="p-2 text-right">MTD LY</th>
+              <th class="p-2 text-center rounded-r-lg">Growth</th>
+            </tr>
+          </thead>
+          <tbody id="reviewTableBody">
+            <!-- Rows generated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left Column: Input Stores -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-blue-900">Input Text WA Toko (9 Store)</h2>
+          <button onclick="clearAllFields()" class="text-xs text-rose-500 hover:underline">Reset Semua</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="storesContainer">
+          <!-- Dynamically generated store input cards -->
+        </div>
+      </div>
+
+      <!-- Right Column: Output Report -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-blue-900">Output Laporan Region 6</h2>
+          <div class="flex gap-2">
+            <button onclick="copyOutput()" class="bg-blue-900 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-sm">
+              <i class="fa-regular fa-copy"></i> Copy Teks
+            </button>
+            <button onclick="sendToWA()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-sm">
+              <i class="fa-brands fa-whatsapp"></i> Kirim WA
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+          <textarea id="outputWA" rows="26" readonly class="w-full bg-slate-50 text-slate-800 font-mono text-xs p-3 rounded-lg focus:outline-none border border-slate-200 resize-none leading-relaxed"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const stores = [
+      { code: "DPK", name: "Depok" },
+      { code: "BGR", name: "Bogor" },
+      { code: "CBN", name: "Cibinong" },
+      { code: "TLC", name: "Tallaca City" },
+      { code: "CNR", name: "Cinere" },
+      { code: "SHL", name: "Shila Sawangan" },
+      { code: "KDI", name: "Kendari" },
+      { code: "PRS", name: "Perintis" },
+      { code: "PYM", name: "Pengayoman" }
+    ];
+
+    // Set Default Date to Today format: DD-BULAN-YYYY
+    function setTodayDate() {
+      const months = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+      const d = new Date();
+      const dateStr = `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+      document.getElementById("reportDate").value = dateStr;
+    }
+
+    // Build UI Input Cards
+    function initStoreInputs() {
+      const container = document.getElementById("storesContainer");
+      container.innerHTML = "";
+      
+      stores.forEach((st) => {
+        const card = document.createElement("div");
+        card.className = "bg-blue-900 border border-blue-900 rounded-xl p-3 flex flex-col gap-2 shadow-sm";
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-blue-700 pb-1.5">
+            <span class="font-bold text-white text-sm">${st.code} - ${st.name}</span>
+            <span class="text-[10px] bg-white text-blue-900 font-semibold px-2 py-0.5 rounded">Paste WA</span>
+          </div>
+          <textarea id="raw_${st.code}" rows="3" placeholder="Paste teks laporan WA ${st.name} di sini..." 
+            oninput="processAllStores()"
+            class="w-full bg-white border border-blue-700 rounded p-2 text-xs text-slate-800 placeholder-slate-400 font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Normalisasi separator ribuan/desimal (ID/EN) menjadi angka murni, TANPA skala apapun.
+    function parseRawNumber(str) {
+      if (!str) return 0;
+      let s = String(str).trim().replace(/\*/g, '');
+      if (!s) return 0;
+
+      let neg = false;
+      if (/^\(.*\)$/.test(s)) { neg = true; s = s.replace(/[()]/g, ''); }
+
+      let hasDot = s.includes('.');
+      let hasComma = s.includes(',');
+      let cleanDigits = s;
+
+      if (hasDot && hasComma) {
+        let lastDot = s.lastIndexOf('.');
+        let lastComma = s.lastIndexOf(',');
+        if (lastComma > lastDot) {
+          cleanDigits = s.substring(0, lastComma).replace(/\./g, '');
+        } else {
+          cleanDigits = s.substring(0, lastDot).replace(/,/g, '');
+        }
+      } else if (hasDot) {
+        let parts = s.split('.');
+        if (parts.length > 2) {
+          cleanDigits = parts.join('');
+        } else if (parts.length === 2) {
+          cleanDigits = parts[1].length === 3 ? parts[0] + parts[1] : s;
+        }
+      } else if (hasComma) {
+        let parts = s.split(',');
+        if (parts.length > 2) {
+          cleanDigits = parts.join('');
+        } else if (parts.length === 2) {
+          cleanDigits = parts[1].length === 3 ? parts[0] + parts[1] : parts[0] + '.' + parts[1];
+        }
+      }
+
+      let num = parseFloat(cleanDigits) || 0;
+      return neg ? -num : num;
+    }
+
+    // Parser SEPASANG angka (T & A) dengan SATU skala yang sama untuk keduanya.
+    // context: 'daily' (T/A harian, wajar < 2.000) | 'mtd' (T/A bulan berjalan, wajar < 50.000)
+    // Ini memperbaiki bug lama: T & A dulu diskalakan SENDIRI-SENDIRI (parseStoreValue per nilai),
+    // sehingga pasangan seperti "117,810,000 / 46,553,748" bisa jadi 118 / 46554 (beda skala!),
+    // dan MTD wajar seperti "10,933 / 9,501" malah ikut dibagi 1000 jadi 11 / 10 (padahal sudah benar).
+    function parsePair(rawA, rawB, context) {
+      let a = parseRawNumber(rawA);
+      let b = parseRawNumber(rawB);
+      let maxVal = Math.max(Math.abs(a), Math.abs(b));
+      let scale = 1;
+      if (maxVal >= 100000000) {
+        scale = 1000000; // nilai Rupiah penuh (mis. laporan PRS yg pakai omset, bukan transaksi)
+      } else if (context === 'daily' && maxVal >= 2000) {
+        scale = 1000; // transaksi harian tidak realistis > 2.000 -> kemungkinan salah ketik/format
+      } else if (context === 'mtd' && maxVal >= 50000) {
+        scale = 1000; // transaksi MTD (±30 hari) tidak realistis > 50.000
+      }
+      return { a: Math.round(a / scale), b: Math.round(b / scale) };
+    }
+
+    // Parser untuk NILAI TUNGGAL bertipe currency/nominal (LY, Protection, dsb) -> skala ke "Juta"
+    // Catatan: ambang ÷1.000 dinaikkan ke 50.000 (bukan 10.000) karena banyak toko menulis
+    // MTD LY yang SUDAH dalam satuan Juta dengan angka 10.000-an (mis. "10.325" = 10.325 Juta),
+    // bukan angka Rupiah ribuan yang perlu dikonversi. Ambang lama membuat nilai valid ini
+    // ikut terbagi dan jadi salah (10.325 -> 10).
+    function parseSingleCurrency(rawVal) {
+      let n = parseRawNumber(rawVal);
+      let abs = Math.abs(n);
+      if (abs >= 100000000) return Math.round(n / 1000000); // Rupiah penuh (miliaran+) -> Juta
+      if (abs >= 50000) return Math.round(n / 1000); // Angka Juta yg tidak wajar (>50rb Juta) -> kemungkinan toko menulis format 1000x lipat (spt Cinere)
+      return Math.round(n);
+    }
+
+    // Extraction Engine untuk Teks Laporan WA
+    function parseStoreText(code, text) {
+      let res = { 
+        T: 0, A: 0, LY: 0, 
+        mtdT: 0, mtdA: 0, mtdLY: 0, 
+        growth: 0, prot: 0, isDiv0: false 
+      };
+      if (!text || text.trim() === "") return res;
+
+      let cleanText = text.replace(/\*/g, '');
+
+      // 1. Extract Protection
+      let protMatch = cleanText.match(/(?:Mitra\s*10\s*Protection|BCA\s*Protection|BCA\s*PROTEKSI|Protection|BCA\s*ins\s*T\/A)\s*:\s*([\d\.,]+(?:\s*\/\s*[\d\.,]+)?)/i);
+      if (protMatch) {
+        let val = protMatch[1];
+        if (val.includes('/')) {
+          // Format "target/aktual" (mis. BCA ins T/A : 10/12) -> ambil nilai KEDUA (aktual),
+          // dan JANGAN fallback ke nilai pertama walau aktualnya 0 (dulu ini bug: 0 dianggap falsy).
+          let parts = val.split('/');
+          res.prot = parseSingleCurrency(parts[1]);
+        } else {
+          res.prot = parseSingleCurrency(val);
+        }
+      }
+
+      // 2. Extract Daily T / A / LY
+      let taLyMatch = cleanText.match(/(?:Daily\s*)?T\/A\/LY\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i);
+      if (taLyMatch) {
+        let p = parsePair(taLyMatch[1], taLyMatch[2], 'daily');
+        res.T = p.a; res.A = p.b;
+        res.LY = parseSingleCurrency(taLyMatch[3]);
+      } else {
+        let taMatch = cleanText.match(/T\/A(?:\/ACH)?\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i) || 
+                      cleanText.match(/T\/A\s*:\s*([\d\.,]+)\/([\d\.,]+)/i);
+        if (taMatch) {
+          let p = parsePair(taMatch[1], taMatch[2], 'daily');
+          res.T = p.a; res.A = p.b;
+        }
+        
+        // Extract Baris Sales LY / LY / L/Y (Abaikan FFC LY & MTD LY)
+        let lines = cleanText.split('\n');
+        for (let line of lines) {
+          if (line.toUpperCase().includes('FFC')) continue;
+          if (line.toUpperCase().includes('MTD')) continue;
+          let lyMatch = line.match(/(?:Sales\s*L\s*\/?\s*Y|L\s*\/?\s*Y)\s*[:\s]\s*([\d\.,]+)/i);
+          if (lyMatch) {
+            res.LY = parseSingleCurrency(lyMatch[1]);
+            break;
+          }
+        }
+      }
+
+      // 3. Extract MTD T / A / LY
+      let mtdTaLyMatch = cleanText.match(/MTD\s*(?:T\s*\/\s*(?:MTD\s*)?A\s*\/\s*(?:MTD\s*)?LY|T\/A)\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i);
+      if (mtdTaLyMatch) {
+        let p = parsePair(mtdTaLyMatch[1], mtdTaLyMatch[2], 'mtd');
+        res.mtdT = p.a; res.mtdA = p.b;
+        res.mtdLY = parseSingleCurrency(mtdTaLyMatch[3]);
+      } else {
+        let mtdTaMatch = cleanText.match(/MTD\s*(?:T\s*\/\s*(?:MTD\s*)?A(?:\s*\/\s*ACH)?)?\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i);
+        if (mtdTaMatch) {
+          let p = parsePair(mtdTaMatch[1], mtdTaMatch[2], 'mtd');
+          res.mtdT = p.a; res.mtdA = p.b;
+        }
+
+        // Extract Baris MTD Sales LY / MTD LY / MTD L/Y (Abaikan FFC)
+        let lines = cleanText.split('\n');
+        for (let line of lines) {
+          if (line.toUpperCase().includes('FFC')) continue;
+          let mtdLyMatch = line.match(/MTD\s*(?:Sales\s*)?L\s*\/?\s*Y\s*[:\s]\s*([\d\.,]+)/i);
+          if (mtdLyMatch) {
+            res.mtdLY = parseSingleCurrency(mtdLyMatch[1]);
+            break;
+          }
+        }
+      }
+
+      // 4. Extract Growth (Abaikan "Growth D")
+      let grMatch = cleanText.match(/Growth(?!\s*D)\s*:\s*([+-]?\d+(?:\.\d+)?%|#DIV\/0!)/i) || 
+                    cleanText.match(/GR\s*:\s*(#DIV\/0!|[+-]?\d+(?:\.\d+)?%)/i);
+
+      if (grMatch) {
+        if (grMatch[1].includes("#DIV/0!")) {
+          res.isDiv0 = true;
+        } else {
+          res.growth = parseFloat(grMatch[1].replace("%", "")) || 0;
+        }
+      }
+
+      return res;
+    }
+
+    // ==== Persistensi Data (localStorage) ====
+    // Kunci penyimpanan di browser, supaya data tidak hilang walau di-refresh
+    const STORAGE_KEY = "rekapRegion6_savedData";
+
+    // Simpan seluruh isi textarea toko + tanggal/jam ke localStorage
+    function saveToStorage() {
+      const data = {
+        reportDate: document.getElementById("reportDate").value,
+        reportTime: document.getElementById("reportTime").value,
+        stores: {}
+      };
+      stores.forEach((st) => {
+        const el = document.getElementById(`raw_${st.code}`);
+        data.stores[st.code] = el ? el.value : "";
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn("Gagal menyimpan data ke localStorage:", e);
+      }
+    }
+
+    // Muat kembali data tersimpan dari localStorage (dipanggil saat halaman dibuka)
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+
+        if (data.reportDate) document.getElementById("reportDate").value = data.reportDate;
+        if (data.reportTime) document.getElementById("reportTime").value = data.reportTime;
+
+        if (data.stores) {
+          stores.forEach((st) => {
+            const el = document.getElementById(`raw_${st.code}`);
+            if (el && data.stores[st.code] !== undefined) {
+              el.value = data.stores[st.code];
+            }
+          });
+        }
+        return true;
+      } catch (e) {
+        console.warn("Gagal memuat data dari localStorage:", e);
+        return false;
+      }
+    }
+
+    // Hapus data tersimpan di localStorage
+    function clearStorage() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.warn("Gagal menghapus data localStorage:", e);
+      }
+    }
+
+    // Menyimpan hasil parsing "Mitra10 Protection" per toko (tidak ditampilkan di tabel cek,
+    // tapi tetap dipakai saat membangun teks Output)
+    let latestProtections = [];
+
+    // Ambil hasil parsing mentah semua toko -> array data yang akan ditampilkan di Tabel Cek & Edit
+    function buildStoreDataArray() {
+      latestProtections = [];
+      return stores.map((st) => {
+        let raw = document.getElementById(`raw_${st.code}`).value;
+        let parsed = parseStoreText(st.code, raw);
+        latestProtections.push(`${st.code}\t:\t${parsed.prot}`);
+        return {
+          code: st.code,
+          name: st.name,
+          T: parsed.T,
+          A: parsed.A,
+          LY: parsed.LY,
+          mtdT: parsed.mtdT,
+          mtdA: parsed.mtdA,
+          mtdLY: parsed.mtdLY,
+          growthText: parsed.isDiv0 ? "#DIV/0!" : `${parsed.growth.toFixed(2)}%`
+        };
+      });
+    }
+
+    // Render Tabel Cek & Edit (semua cell T/A/LY/MTD/Growth bisa diedit manual, kolom % otomatis)
+    function renderReviewTable(dataArr) {
+      const tbody = document.getElementById("reviewTableBody");
+      tbody.innerHTML = "";
+
+      const inputCls = "w-full min-w-[64px] border border-slate-200 rounded px-1.5 py-1 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+
+      dataArr.forEach((d) => {
+        const achPct = d.T > 0 ? Math.round((d.A / d.T) * 100) : 0;
+        const mtdPct = d.mtdT > 0 ? Math.round((d.mtdA / d.mtdT) * 100) : 0;
+
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-slate-100 hover:bg-slate-50";
+        tr.dataset.code = d.code;
+        tr.innerHTML = `
+          <td class="p-1.5 font-semibold text-blue-900 whitespace-nowrap">${d.code}</td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="T" value="${d.T}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="A" value="${d.A}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1 text-center font-semibold text-blue-900" data-field="pct">${achPct}%</td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="LY" value="${d.LY}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="mtdT" value="${d.mtdT}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="mtdA" value="${d.mtdA}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1 text-center font-semibold text-blue-900" data-field="mtdPct">${mtdPct}%</td>
+          <td class="p-1"><input type="text" inputmode="decimal" class="${inputCls}" data-field="mtdLY" value="${d.mtdLY}" oninput="generateOutputFromTable()"></td>
+          <td class="p-1"><input type="text" class="w-full min-w-[56px] border border-slate-200 rounded px-1.5 py-1 text-center focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" data-field="growth" value="${d.growthText}" oninput="generateOutputFromTable()"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Baca ulang isi Tabel Cek & Edit saat ini (termasuk perubahan manual dari user)
+    function readTableData() {
+      const trs = document.querySelectorAll("#reviewTableBody tr");
+      const result = [];
+      trs.forEach((tr) => {
+        const code = tr.dataset.code;
+        const st = stores.find((s) => s.code === code);
+        const val = (field) => tr.querySelector(`[data-field="${field}"]`).value;
+        result.push({
+          code,
+          name: st ? st.name : code,
+          T: parseFloat(val("T")) || 0,
+          A: parseFloat(val("A")) || 0,
+          LY: parseFloat(val("LY")) || 0,
+          mtdT: parseFloat(val("mtdT")) || 0,
+          mtdA: parseFloat(val("mtdA")) || 0,
+          mtdLY: parseFloat(val("mtdLY")) || 0,
+          growthText: val("growth")
+        });
+      });
+      return result;
+    }
+
+    // Update kolom % (achievement Daily & MTD) di tabel setiap kali T/A/MTD diedit
+    function updatePctCells() {
+      document.querySelectorAll("#reviewTableBody tr").forEach((tr) => {
+        const num = (field) => parseFloat(tr.querySelector(`[data-field="${field}"]`).value) || 0;
+        const T = num("T"), A = num("A"), mtdT = num("mtdT"), mtdA = num("mtdA");
+        const pct = T > 0 ? Math.round((A / T) * 100) : 0;
+        const mtdPct = mtdT > 0 ? Math.round((mtdA / mtdT) * 100) : 0;
+        tr.querySelector('[data-field="pct"]').textContent = `${pct}%`;
+        tr.querySelector('[data-field="mtdPct"]').textContent = `${mtdPct}%`;
+      });
+    }
+
+    // Bangun teks Output Laporan berdasarkan isi TABEL saat ini (bukan langsung dari teks WA mentah),
+    // supaya kalau ada koreksi manual di tabel, Output ikut berubah otomatis.
+    function generateOutputFromTable() {
+      updatePctCells();
+      const dataArr = readTableData();
+
+      const dateVal = document.getElementById("reportDate").value || "22-JULI-2026";
+      const timeVal = document.getElementById("reportTime").value || "18.00";
+
+      let totalT = 0, totalA = 0, totalLY = 0;
+      let lflT = 0, lflA = 0, lflLY = 0;
+
+      let mtdTotalT = 0, mtdTotalA = 0, mtdTotalLY = 0;
+      let mtdLflT = 0, mtdLflA = 0, mtdLflLY = 0;
+
+      let rows = [];
+
+      dataArr.forEach((d) => {
+        totalT += d.T;
+        totalA += d.A;
+        totalLY += d.LY;
+
+        mtdTotalT += d.mtdT;
+        mtdTotalA += d.mtdA;
+        mtdTotalLY += d.mtdLY;
+
+        if (d.code !== "PRS" && d.code !== "PYM") {
+          lflT += d.T;
+          lflA += d.A;
+          lflLY += d.LY;
+
+          mtdLflT += d.mtdT;
+          mtdLflA += d.mtdA;
+          mtdLflLY += d.mtdLY;
+        }
+
+        let achPct = d.T > 0 ? Math.round((d.A / d.T) * 100) : 0;
+        rows.push(`${d.code}\t:\t${d.T}\t/\t${d.A}\t(\t${achPct}%\t)\t|\t${d.growthText}`);
+      });
+
+      const calcAch = (a, t) => t > 0 ? Math.round((a / t) * 100) : 0;
+      const calcGr = (a, ly) => ly > 0 ? (((a - ly) / ly) * 100).toFixed(2) + "%" : "0.00%";
+      const fmt = (n) => n.toLocaleString('en-US');
+
+      let lflAch = calcAch(lflA, lflT);
+      let lflGr = calcGr(lflA, lflLY);
+
+      let totalAch = calcAch(totalA, totalT);
+      let totalGr = calcGr(totalA, totalLY);
+
+      let mtdLflAch = calcAch(mtdLflA, mtdLflT);
+      let mtdLflGr = calcGr(mtdLflA, mtdLflLY);
+
+      let mtdTotalAch = calcAch(mtdTotalA, mtdTotalT);
+      let mtdTotalGr = calcGr(mtdTotalA, mtdTotalLY);
+
+      // Construct WhatsApp Plaintext Report
+      let output = `Report Region 6
+${dateVal}
+\uD83D\uDD55 ${timeVal}
+
+STORE\t\tT\t|\tA\t\t%\t\t|\tGROWTH
+${rows.join("\n")}
+
+TOTAL REGION 6
+T/A/LY (LFL)\t\t${fmt(lflT)}\t|\t${fmt(lflA)}\t|\t${fmt(lflLY)}\t\t(${lflAch}%)\t${lflGr}
+T/A/LY\t:\t${fmt(totalT)}\t|\t${fmt(totalA)}\t|\t${fmt(totalLY)}\t\t(${totalAch}%)\t${totalGr}
+
+MTD T/A/LY (LFL)\t\t${fmt(mtdLflT)}\t|\t${fmt(mtdLflA)}\t|\t${fmt(mtdLflLY)}\t\t(${mtdLflAch}%)\t${mtdLflGr}
+MTD T/A/LY\t:\t${fmt(mtdTotalT)}\t|\t${fmt(mtdTotalA)}\t|\t${fmt(mtdTotalLY)}\t\t(${mtdTotalAch}%)\t${mtdTotalGr}
+
+Mitra10 Protection
+${latestProtections.join("\n")}`;
+
+      document.getElementById("outputWA").value = output;
+
+      // Simpan otomatis setiap kali output berubah (juga saat mengetik/paste/edit tabel)
+      saveToStorage();
+    }
+
+    // Main Function: parse ulang semua teks WA mentah -> isi Tabel Cek & Edit -> generate Output
+    // Dipanggil saat paste/ketik di kolom WA (akan menimpa edit manual tabel dengan hasil parsing terbaru)
+    function processAllStores() {
+      const dataArr = buildStoreDataArray();
+      renderReviewTable(dataArr);
+      generateOutputFromTable();
+    }
+
+    function copyOutput() {
+      const outputText = document.getElementById("outputWA");
+      outputText.select();
+      document.execCommand("copy");
+      alert("Laporan berhasil dicopy ke Clipboard!");
+    }
+
+    function sendToWA() {
+      const text = encodeURIComponent(document.getElementById("outputWA").value);
+      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+
+    function clearAllFields() {
+      stores.forEach(st => {
+        document.getElementById(`raw_${st.code}`).value = "";
+      });
+      clearStorage();
+      processAllStores();
+    }
+
+    // Initialize Page
+    window.onload = () => {
+      initStoreInputs();
+      const restored = loadFromStorage();
+      if (!restored || !document.getElementById("reportDate").value) {
+        setTodayDate();
+      }
+      processAllStores();
+    };
+  </script>
+</body>
+</html>
