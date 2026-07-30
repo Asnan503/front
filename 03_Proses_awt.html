@@ -183,12 +183,12 @@ footer.note{margin-top:26px;color:#8f8770;font-size:12px;line-height:1.6;}
     </div>
     <div class="kpi accent3">
       <div class="num" id="kpiUnder10">–</div>
-      <div class="lbl">≤ 10 Menit</div>
+      <div class="lbl">Aman (Tinting ≤30m / Non ≤10m)</div>
       <div class="sub2" id="kpiUnder10Pct"></div>
     </div>
     <div class="kpi accent2">
       <div class="num" id="kpiOver10">–</div>
-      <div class="lbl">&gt; 10 Menit</div>
+      <div class="lbl">Bermasalah (Tinting &gt;30m / Non &gt;10m)</div>
       <div class="sub2" id="kpiOver10Pct"></div>
     </div>
     <div class="kpi accent2">
@@ -508,8 +508,10 @@ function render(){
   document.getElementById('kpiTotalDR').textContent = totalDR;
   document.getElementById('kpiAvgAWT').textContent = secToHMS(avgAWT);
 
-  const under10 = recs.filter(r => r.awtSec <= 600);
-  const over10all = recs.filter(r => r.awtSec > 600);
+  // Batas aman per jenis: Tinting (paid==='Yes') = 30 menit, Non Tinting (paid==='No') = 10 menit
+  const batasSec = r => r.paid === 'Yes' ? 1800 : 600;
+  const under10 = recs.filter(r => r.awtSec <= batasSec(r));
+  const over10all = recs.filter(r => r.awtSec > batasSec(r));
   document.getElementById('kpiUnder10').textContent = under10.length;
   document.getElementById('kpiUnder10Pct').textContent = pct(under10.length, totalDR);
   document.getElementById('kpiOver10').textContent = over10all.length;
@@ -670,8 +672,10 @@ document.getElementById('downloadReportBtn').addEventListener('click', ()=>{
   const grp10 = recs.filter(r => r.paid === 'No' && r.awtSec > 600);
   const grpTint = recs.filter(r => r.paid === 'Yes');
   const grp30 = recs.filter(r => r.paid === 'Yes' && r.awtSec > 1800);
-  const under10 = recs.filter(r => r.awtSec <= 600);
-  const over10all = recs.filter(r => r.awtSec > 600);
+  // Batas aman per jenis: Tinting (paid==='Yes') = 30 menit, Non Tinting (paid==='No') = 10 menit
+  const batasSecTxt = r => r.paid === 'Yes' ? 1800 : 600;
+  const under10 = recs.filter(r => r.awtSec <= batasSecTxt(r));
+  const over10all = recs.filter(r => r.awtSec > batasSecTxt(r));
 
   const txt =
 `Tgl ${formatTanggalPanjang(dObj)}
@@ -692,8 +696,8 @@ Avg time	:	${secToHMS(avg(grpTint.map(r=>r.awtSec)))}
 Cont	:	${pct(grp30.length, totalDR)}
 Avg time	:	${secToHMS(avg(grp30.map(r=>r.awtSec)))}
 
-< 10 Menit	:	${under10.length}	${pct(under10.length, totalDR)}
-> 10 Menit	:	${over10all.length}	${pct(over10all.length, totalDR)}
+< 10 Menit : ${under10.length} (${pct(under10.length, totalDR)})
+> 10 Menit : ${over10all.length} (${pct(over10all.length, totalDR)})
 Terimakasih🙏🏻`;
 
   downloadTxt(`AWT_Daily_${dateVal}.txt`, txt);
