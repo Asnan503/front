@@ -579,6 +579,18 @@
     <button class="btn-drive" id="driveBudgetCat" title="Load dari Google Drive (tahan untuk ubah link)">☁️</button>
   </div>
 
+  <!-- BUDGET_UP -->
+  <div class="import-group has-drive" id="grpBudgetUp">
+    <label class="btn-import" id="btnBudgetUp" title="Pilih file BUDGET_UP (XLSX) — format sama dengan BUDGET_CATEGORY">
+      <span class="icon">🟣</span>
+      <span>BUDGET_UP</span>
+      <span class="tag" id="tagBudgetUp">XLSX</span>
+      <input type="file" accept=".xlsx,.xls" onchange="importFile('budget_up', this)">
+    </label>
+    <button class="btn-reload" id="reloadBudgetUp" onclick="reloadFile('budget_up')" title="Reload file dari disk" style="display:none">🔄</button>
+    <button class="btn-drive" id="driveBudgetUp" title="Load dari Google Drive / Google Sheet (tahan untuk ubah link)">☁️</button>
+  </div>
+
   <!-- STOCK_QTY_VALUE -->
   <div class="import-group" id="grpStock">
     <label class="btn-import" id="btnStock" title="Pilih file STOCK_QTY_VALUE (XLSX)">
@@ -901,6 +913,27 @@
         <div class="export-preview" id="exportPreviewRegion">Lengkapi data filter & input untuk melihat preview laporan...</div>
       </div>
     </div>
+
+    <div class="export-panel">
+      <div class="export-panel-title">🟣 Laporan Utama — Budget UP</div>
+      <div class="export-grid">
+        <div class="export-field" style="grid-column:1/-1">
+          <label>Keterangan</label>
+          <div class="auto-val" style="white-space:normal;line-height:1.4">Preview & download di bawah ini memakai format yang sama dengan Laporan Utama (s/d Jam, FFC, New Member, Voucher CRM, dst — semua dibaca otomatis dari panel Laporan Utama di atas). Bedanya hanya pada angka Budget (T/A, MTD T/A, Target Bulan, ACH T/A) yang diambil dari file <strong>BUDGET_UP</strong>.</div>
+        </div>
+      </div>
+      <div class="export-preview-card">
+        <div class="export-preview-toolbar">
+          <button class="btn-icon" onclick="generateExportTXTUP()" title="Download Laporan TXT (Budget UP)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v7"/><path d="M8.7 11.2L12 14.5l3.3-3.3"/></svg>
+          </button>
+          <button class="btn-icon" onclick="copyExportPreviewUP()" title="Copy Preview">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </button>
+        </div>
+        <div class="export-preview" id="exportPreviewUP">Lengkapi data filter & input Laporan Utama, serta import BUDGET_UP, untuk melihat preview laporan...</div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -1073,6 +1106,47 @@
     </table></div>
   </div>
 
+  <div class="section-title">🟣 Realisasi Kategori & Zonasi — Budget UP</div>
+  <div class="table-card" style="margin-bottom:16px" id="captureCatTableDailyUP">
+    <div class="download-timestamp"></div>
+    <div class="table-header">
+      <h3>Realisasi per Kategori — Budget UP (Harian)</h3>
+      <button class="btn-table-action" onclick="downloadTableAsPNG('captureCatTableDailyUP', 'Realisasi_Kategori_Harian_BudgetUP')">📸 Download PNG</button>
+    </div>
+    <div class="tbl-wrap"><table id="tblCatDailyUP">
+      <thead><tr><th>Kategori</th><th>Budget Harian</th><th>Realisasi</th><th>% Real</th><th>Selisih</th><th>BUDGET PB</th><th>REAL PB</th><th>% REAL PB</th><th>Progress</th></tr></thead>
+      <tbody id="tblCatDailyUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
+    </table></div>
+
+    <div class="table-header" style="border-top:1px solid var(--border)">
+      <h3>Realisasi PerZonasi — Budget UP (Harian)</h3>
+    </div>
+    <div class="tbl-wrap"><table id="tblZonaDailyUP">
+      <thead><tr><th>Zona</th><th>Budget Harian</th><th>Realisasi</th><th>% Real</th><th>Selisih</th><th>BUDGET PB</th><th>REAL PB</th><th>% REAL PB</th><th>Progress</th></tr></thead>
+      <tbody id="tblZonaDailyUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="table-card" style="margin-bottom:16px" id="captureCatTableUP">
+    <div class="download-timestamp"></div>
+    <div class="table-header">
+      <h3>Realisasi per Kategori — Budget UP (MTD)</h3>
+      <button class="btn-table-action" onclick="downloadTableAsPNG('captureCatTableUP', 'Ringkasan_Kategori_Zonasi_BudgetUP')">📸 Download PNG</button>
+    </div>
+    <div class="tbl-wrap"><table id="tblCatUP">
+      <thead><tr><th>Kategori</th><th>Budget MTD</th><th>Realisasi</th><th>% Real</th><th>Selisih</th><th>BUDGET PB</th><th>REAL PB</th><th>% REAL PB</th><th>Progress</th></tr></thead>
+      <tbody id="tblCatUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
+    </table></div>
+
+    <div class="table-header" style="border-top:1px solid var(--border)">
+      <h3>Realisasi PerZonasi — Budget UP (MTD)</h3>
+    </div>
+    <div class="tbl-wrap"><table id="tblZonaUP">
+      <thead><tr><th>Zona</th><th>Budget</th><th>Realisasi</th><th>% Real</th><th>Selisih</th><th>BUDGET PB</th><th>REAL PB</th><th>% REAL PB</th><th>Progress</th></tr></thead>
+      <tbody id="tblZonaUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
+    </table></div>
+  </div>
+
   <div class="table-card" style="margin-bottom:16px" id="captureGrowthTable">
     <div class="download-timestamp"></div>
     <div class="table-header">
@@ -1111,6 +1185,7 @@ const state = {
   sales: [],
   sales_ly: [], 
   budgetCat: {},
+  budgetUp: {},
   budgetSP: {},
   stock: [],
   stockDate: null,
@@ -1122,6 +1197,7 @@ const STORAGE_KEYS = {
   sales: 'dashboard_sales',
   sales_ly: 'dashboard_sales_ly',
   budgetCat: 'dashboard_budgetCat',
+  budgetUp: 'dashboard_budgetUp',
   stock: 'dashboard_stock',
   meta: 'dashboard_meta'
 };
@@ -1144,6 +1220,7 @@ function saveToStorage(type) {
     if (type === 'sales') localStorage.setItem(STORAGE_KEYS.sales, JSON.stringify(state.sales));
     else if (type === 'sales_ly') localStorage.setItem(STORAGE_KEYS.sales_ly, JSON.stringify(state.sales_ly));
     else if (type === 'budget_category') localStorage.setItem(STORAGE_KEYS.budgetCat, JSON.stringify(state.budgetCat));
+    else if (type === 'budget_up') localStorage.setItem(STORAGE_KEYS.budgetUp, JSON.stringify(state.budgetUp));
     else if (type === 'stock') { localStorage.setItem(STORAGE_KEYS.stock, JSON.stringify(state.stock)); localStorage.setItem(STORAGE_KEYS.stock + '_date', JSON.stringify(state.stockDate)); }
   } catch(e) { console.warn('Storage penuh atau tidak tersedia:', e); }
 }
@@ -1153,6 +1230,7 @@ function loadFromStorage() {
     const sales = localStorage.getItem(STORAGE_KEYS.sales);
     const sales_ly = localStorage.getItem(STORAGE_KEYS.sales_ly);
     const budgetCat = localStorage.getItem(STORAGE_KEYS.budgetCat);
+    const budgetUp = localStorage.getItem(STORAGE_KEYS.budgetUp);
     const stock = localStorage.getItem(STORAGE_KEYS.stock);
     const stockDate = localStorage.getItem(STORAGE_KEYS.stock + '_date');
     const meta = localStorage.getItem(STORAGE_KEYS.meta);
@@ -1160,6 +1238,7 @@ function loadFromStorage() {
     if (sales) { state.sales = JSON.parse(sales); markLoaded('btnSales','tagSales','CACHED','(tersimpan)'); }
     if (sales_ly) { state.sales_ly = JSON.parse(sales_ly); markLoaded('btnSalesLY','tagSalesLY','CACHED','(tersimpan)'); }
     if (budgetCat) { state.budgetCat = JSON.parse(budgetCat); markLoaded('btnBudgetCat','tagBudgetCat','CACHED','(tersimpan)'); }
+    if (budgetUp) { state.budgetUp = JSON.parse(budgetUp); markLoaded('btnBudgetUp','tagBudgetUp','CACHED','(tersimpan)'); }
     if (stock) { state.stock = JSON.parse(stock); state.stockDate = stockDate ? JSON.parse(stockDate) : null; markLoaded('btnStock','tagStock','CACHED','(tersimpan)'); }
     if (meta) {
       const m = JSON.parse(meta);
@@ -1173,14 +1252,14 @@ function loadFromStorage() {
 function clearStorage() {
   Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
   localStorage.removeItem(STORAGE_KEYS.stock + '_date');
-  state.sales = []; state.sales_ly = []; state.budgetCat = {}; state.budgetSP = {}; state.stock = []; state.stockDate = null;
-  ['btnSales','btnSalesLY','btnBudgetCat','btnStock'].forEach(id => document.getElementById(id)?.classList.remove('loaded','cached'));
-  ['tagSales','tagSalesLY','tagBudgetCat','tagStock'].forEach(id => {
+  state.sales = []; state.sales_ly = []; state.budgetCat = {}; state.budgetUp = {}; state.budgetSP = {}; state.stock = []; state.stockDate = null;
+  ['btnSales','btnSalesLY','btnBudgetCat','btnBudgetUp','btnStock'].forEach(id => document.getElementById(id)?.classList.remove('loaded','cached'));
+  ['tagSales','tagSalesLY','tagBudgetCat','tagBudgetUp','tagStock'].forEach(id => {
     const el = document.getElementById(id); if(el) el.textContent = (id === 'tagSales') ? 'CSV' : 'XLSX';
   });
   // Reset FSAPI handles
   Object.keys(fileHandles).forEach(k => { fileHandles[k] = null; });
-  ['reloadSales','reloadSalesLY','reloadBudgetCat','reloadStock'].forEach(id => {
+  ['reloadSales','reloadSalesLY','reloadBudgetCat','reloadBudgetUp','reloadStock'].forEach(id => {
     const btn = document.getElementById(id); if (btn) { btn.style.display = 'none'; btn.classList.remove('active'); }
   });
   checkReloadAllButton();
@@ -1222,6 +1301,7 @@ function backupAllData() {
         sales: state.sales,
         sales_ly: state.sales_ly,
         budgetCat: state.budgetCat,
+        budgetUp: state.budgetUp,
         stock: state.stock,
         stockDate: state.stockDate
       },
@@ -1262,12 +1342,14 @@ function restoreAllData(inputEl) {
       state.sales = s.sales || [];
       state.sales_ly = s.sales_ly || [];
       state.budgetCat = s.budgetCat || {};
+      state.budgetUp = s.budgetUp || {};
       state.stock = s.stock || [];
       state.stockDate = s.stockDate || null;
 
       if (state.sales.length) { localStorage.setItem(STORAGE_KEYS.sales, JSON.stringify(state.sales)); markLoaded('btnSales','tagSales','CACHED','(restore)'); }
       if (state.sales_ly.length) { localStorage.setItem(STORAGE_KEYS.sales_ly, JSON.stringify(state.sales_ly)); markLoaded('btnSalesLY','tagSalesLY','CACHED','(restore)'); }
       if (state.budgetCat && Object.keys(state.budgetCat).length) { localStorage.setItem(STORAGE_KEYS.budgetCat, JSON.stringify(state.budgetCat)); markLoaded('btnBudgetCat','tagBudgetCat','CACHED','(restore)'); }
+      if (state.budgetUp && Object.keys(state.budgetUp).length) { localStorage.setItem(STORAGE_KEYS.budgetUp, JSON.stringify(state.budgetUp)); markLoaded('btnBudgetUp','tagBudgetUp','CACHED','(restore)'); }
       if (state.stock.length) { localStorage.setItem(STORAGE_KEYS.stock, JSON.stringify(state.stock)); localStorage.setItem(STORAGE_KEYS.stock + '_date', JSON.stringify(state.stockDate)); markLoaded('btnStock','tagStock','CACHED','(restore)'); }
       if (payload.meta) {
         localStorage.setItem(STORAGE_KEYS.meta, JSON.stringify(payload.meta));
@@ -1432,6 +1514,7 @@ function parseAndStore(type, wb, fname) {
   const sheetMap = {
     sales: ['DATA_SALES'], sales_ly: ['SALES DETAIL', 'DATA_SALES_2025', 'SALES_DETAIL', 'DATA SALES 2025'],
     budget_category: ['BUDGET_CATEGORY'],
+    budget_up: ['BUDGET_UP', 'BUDGET UP', 'BUDGET_CATEGORY'],
     stock: ['STOCK QTY AND VALUE', 'STOCK_QTY_VALUE', 'STOCK']
   };
   const candidates = sheetMap[type];
@@ -1521,8 +1604,12 @@ function parseAndStore(type, wb, fname) {
       state.sales_ly = parsedRecords;
       markLoaded('btnSalesLY', 'tagSalesLY', 'LOADED', fname);
     }
-  } else if (type === 'budget_category') {
-    state.budgetCat = {};
+  } else if (type === 'budget_category' || type === 'budget_up') {
+    // BUDGET_UP memakai parser & struktur kolom yang sama persis dengan BUDGET_CATEGORY,
+    // hanya disimpan ke state terpisah (state.budgetUp) supaya kedua budget bisa berjalan
+    // berdampingan tanpa saling menimpa.
+    const isUp = type === 'budget_up';
+    const target = {};
     const headers = rows.length ? Object.keys(rows[0]) : [];
 
     // Normalisasi nama kolom: uppercase + rapatkan spasi ganda, untuk pencocokan yang stabil
@@ -1558,7 +1645,7 @@ function parseAndStore(type, wb, fname) {
 
     rows.forEach(r => {
       const dateISO = excelDateToISO(r[headers[0]]); if (!dateISO) return;
-      state.budgetCat[dateISO] = {
+      target[dateISO] = {
         _total: parseFloat(r['TOTAL'] || 0),
         _totalMtd: parseFloat(r['TOTAL MTD'] || 0),
         _totalPB: parseFloat(r['TOTAL PB'] || 0),
@@ -1587,7 +1674,7 @@ function parseAndStore(type, wb, fname) {
         const pbKey = headers.find(h => norm(h) === `${catNorm} PB`);
         const pbMtdKey = headers.find(h => norm(h) === `${catNorm} PB MTD`);
 
-        state.budgetCat[dateISO]._categories[cat] = {
+        target[dateISO]._categories[cat] = {
           daily: r[cat] || 0,
           mtd: mtdKey ? (r[mtdKey] ?? null) : null,
           pbDaily: pbKey ? (r[pbKey] || 0) : 0,
@@ -1595,7 +1682,9 @@ function parseAndStore(type, wb, fname) {
         };
       });
     });
-    markLoaded('btnBudgetCat', 'tagBudgetCat', 'LOADED', fname);
+
+    if (isUp) { state.budgetUp = target; markLoaded('btnBudgetUp', 'tagBudgetUp', 'LOADED', fname); }
+    else { state.budgetCat = target; markLoaded('btnBudgetCat', 'tagBudgetCat', 'LOADED', fname); }
   } else if (type === 'stock') {
     // File STOCK_QTY_VALUE punya baris judul/info (UserID, judul report, Site & Stock Date)
     // SEBELUM baris header kolom sebenarnya, jadi dibaca sebagai array-of-array (header:1)
@@ -1709,9 +1798,10 @@ function countDaysInclusive(from, to) {
 
 function resetFilter() { setDateRange(); renderAll(); }
 
-function getBudgetCategoryTotalRange(from, to) {
+function getBudgetCategoryTotalRange(from, to, source) {
+  const src = source || state.budgetCat;
   let dailySum = 0; let mtdSum = 0;
-  Object.entries(state.budgetCat).forEach(([d, data]) => {
+  Object.entries(src).forEach(([d, data]) => {
     if (d >= from && d <= to) {
       dailySum += data._total || 0;
       mtdSum = data._totalMtd || mtdSum + data._total;
@@ -1722,7 +1812,7 @@ function getBudgetCategoryTotalRange(from, to) {
   // bukan dari kolom TOTAL PB/TOTAL PB MTD terpisah di file Excel — supaya selalu
   // konsisten dengan angka yang tampil di tabel "Ringkasan Kategori & Zonasi",
   // termasuk saat kolom TOTAL PB tidak ikut diisi oleh user.
-  const catBudgets = getCatBudgets(from, to);
+  const catBudgets = getCatBudgets(from, to, src);
   let pbDailySum = 0, pbMtdSum = 0;
   Object.values(catBudgets).forEach(c => {
     pbDailySum += c.pbDaily || 0;
@@ -1812,6 +1902,7 @@ function renderAll() {
   const dailySales = to ? state.sales.filter(r => r.date === to) : [];
   const dailySalesLY = (to && state.sales_ly.length) ? state.sales_ly.filter(r => r.date === ('2025' + to.slice(4))) : [];
   renderCatTableDaily(dailySales, dailySalesLY, to);
+  renderBudgetUPDaily(dailySales, to);
 
   // ── Ringkasan Kategori & Zonasi, Growth, Road to 100%: dipaksa MTD (awal bulan s/d dateTo),
   // tidak terpengaruh oleh filter tanggal "from" yang sedang aktif di dashboard ──
@@ -1824,6 +1915,7 @@ function renderAll() {
   renderKPI(sales, salesLY, from, to);
   renderDailyChart(sales, from, to);
   renderCatTable(mtdSales, mtdSalesLY, mtdFrom, to);
+  renderBudgetUPMtd(mtdSales, mtdFrom, to);
   renderSPTable(sales, salesLY, from, to);
   renderExecutiveSummary(sales, salesLY, from, to);
 }
@@ -2019,16 +2111,17 @@ function renderDailyChart(sales, from, to) {
   });
 }
 
-function getCatBudgets(from, to) {
+function getCatBudgets(from, to, source) {
+  const src = source || state.budgetCat;
   const allCatNames = new Set(); 
-  Object.values(state.budgetCat).forEach(data => {
+  Object.values(src).forEach(data => {
     if (data._categories) Object.keys(data._categories).forEach(c => allCatNames.add(c));
   });
   
   const result = {};
   allCatNames.forEach(cat => {
     let dailySum = 0; let mtdSum = 0; let pbDailySum = 0; let pbMtdSum = 0;
-    Object.entries(state.budgetCat).forEach(([d, data]) => {
+    Object.entries(src).forEach(([d, data]) => {
       if (d >= from && d <= to && data._categories[cat]) { 
         const c = data._categories[cat];
         dailySum += c.daily || 0; 
@@ -2366,6 +2459,159 @@ function renderZonaTableDaily(rows) {
     </tr>`;
 
   tbody.innerHTML = html;
+}
+
+// ──────────────────────────────────────────
+// REALISASI KATEGORI & ZONASI — BUDGET UP
+// Struktur & tampilan sama persis dengan tabel Realisasi Kategori & Zonasi
+// (Harian/MTD) di atas, tetapi budget acuannya diambil dari state.budgetUp
+// (file BUDGET_UP), bukan state.budgetCat (BUDGET_CATEGORY / Laporan Utama).
+// ──────────────────────────────────────────
+function computeCatZonaRowsUP(sales, from, to) {
+  if (!from || !to) return [];
+  const byCat = {}; const byCatPB = {};
+  sales.forEach(r => {
+    if (r.category) {
+      byCat[r.category] = (byCat[r.category] || 0) + r.amount;
+      if (isPrivateOrExclusiveBrand(r)) byCatPB[r.category] = (byCatPB[r.category] || 0) + r.amount;
+    }
+  });
+
+  const catBudgets = getCatBudgets(from, to, state.budgetUp);
+  const allCats = Array.from(new Set([...Object.keys(byCat), ...Object.keys(catBudgets)])).sort();
+  const isSingleDay = (from === to);
+
+  const rows = allCats.map(cat => {
+    const real = byCat[cat] || 0;
+    const realPB = byCatPB[cat] || 0;
+    const bObj = catBudgets[cat] || { daily: 0, mtd: null, pbDaily: 0, pbMtd: null };
+    const bDaily = bObj.daily || 0;
+    const bMTD = bObj.mtd !== null ? bObj.mtd : bDaily;
+    const bPBDaily = bObj.pbDaily || 0;
+    const bPBMTD = bObj.pbMtd !== null ? bObj.pbMtd : bPBDaily;
+    const targetAcuan = isSingleDay ? bDaily : bMTD;
+    const budgetPB = isSingleDay ? bPBDaily : bPBMTD;
+
+    return {
+      cat, real, targetAcuan,
+      pct: targetAcuan > 0 ? (real / targetAcuan) * 100 : 0,
+      selisih: real - targetAcuan,
+      budgetPB, realPB,
+      pctPB: budgetPB > 0 ? (realPB / budgetPB * 100) : 0
+    };
+  });
+
+  rows.sort((a, b) => b.pct - a.pct);
+  return rows;
+}
+
+function renderCatBodyUP(rows, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr>`; return; }
+
+  let html = rows.map(r => `
+    <tr>
+      <td>${r.cat}</td>
+      <td>${formatJustNumber(r.targetAcuan)}</td>
+      <td><strong>${formatJustNumber(r.real)}</strong></td>
+      <td>${pctBadge(r.pct)}</td>
+      <td style="color:${r.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(r.selisih))} ${r.selisih >= 0 ? '▲' : '▼'}</td>
+      <td>${formatJustNumber(r.budgetPB)}</td>
+      <td><strong>${formatJustNumber(r.realPB)}</strong></td>
+      <td>${pctBadge(r.pctPB)}</td>
+      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(r.pct, 100)}%;background:${barColor(r.pct)}"></div></div></td>
+    </tr>`).join('');
+
+  const totalBudget = rows.reduce((s, r) => s + r.targetAcuan, 0);
+  const totalReal = rows.reduce((s, r) => s + r.real, 0);
+  const totalBudgetPB = rows.reduce((s, r) => s + r.budgetPB, 0);
+  const totalRealPB = rows.reduce((s, r) => s + r.realPB, 0);
+  const totalPct = totalBudget > 0 ? (totalReal / totalBudget * 100) : 0;
+  const totalSelisih = totalReal - totalBudget;
+  const totalPctPB = totalBudgetPB > 0 ? (totalRealPB / totalBudgetPB * 100) : 0;
+
+  html += `
+    <tr class="total-row">
+      <td>TOTAL</td>
+      <td>${formatJustNumber(totalBudget)}</td>
+      <td>${formatJustNumber(totalReal)}</td>
+      <td>${pctBadge(totalPct)}</td>
+      <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
+      <td>${formatJustNumber(totalBudgetPB)}</td>
+      <td>${formatJustNumber(totalRealPB)}</td>
+      <td>${pctBadge(totalPctPB)}</td>
+      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
+    </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function renderZonaBodyUP(rows, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr>`; return; }
+
+  const zonaResults = ZONA_DEFS.map(z => {
+    let real = 0, budget = 0, budgetPB = 0, realPB = 0;
+    rows.forEach(r => {
+      const catUpper = (r.cat || '').toUpperCase();
+      if (z.keywords.some(k => catUpper.includes(k))) {
+        real += r.real; budget += r.targetAcuan;
+        budgetPB += r.budgetPB || 0; realPB += r.realPB || 0;
+      }
+    });
+    return {
+      zona: z.zona, real, budget, pct: budget > 0 ? (real / budget * 100) : 0, selisih: real - budget,
+      budgetPB, realPB, pctPB: budgetPB > 0 ? (realPB / budgetPB * 100) : 0
+    };
+  });
+
+  let totalReal = 0, totalBudget = 0, totalBudgetPB = 0, totalRealPB = 0;
+  zonaResults.forEach(z => { totalReal += z.real; totalBudget += z.budget; totalBudgetPB += z.budgetPB; totalRealPB += z.realPB; });
+  const totalPct = totalBudget > 0 ? (totalReal / totalBudget * 100) : 0;
+  const totalSelisih = totalReal - totalBudget;
+  const totalPctPB = totalBudgetPB > 0 ? (totalRealPB / totalBudgetPB * 100) : 0;
+
+  let html = zonaResults.map(z => `
+    <tr>
+      <td><strong>${z.zona}</strong></td>
+      <td>${formatJustNumber(z.budget)}</td>
+      <td><strong>${formatJustNumber(z.real)}</strong></td>
+      <td>${pctBadge(z.pct)}</td>
+      <td style="color:${z.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(z.selisih))} ${z.selisih >= 0 ? '▲' : '▼'}</td>
+      <td>${formatJustNumber(z.budgetPB)}</td>
+      <td><strong>${formatJustNumber(z.realPB)}</strong></td>
+      <td>${pctBadge(z.pctPB)}</td>
+      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(z.pct, 100)}%;background:${barColor(z.pct)}"></div></div></td>
+    </tr>`).join('');
+
+  html += `
+    <tr class="total-row">
+      <td>TOTAL</td>
+      <td>${formatJustNumber(totalBudget)}</td>
+      <td>${formatJustNumber(totalReal)}</td>
+      <td>${pctBadge(totalPct)}</td>
+      <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
+      <td>${formatJustNumber(totalBudgetPB)}</td>
+      <td>${formatJustNumber(totalRealPB)}</td>
+      <td>${pctBadge(totalPctPB)}</td>
+      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
+    </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function renderBudgetUPDaily(dailySales, to) {
+  const rows = computeCatZonaRowsUP(dailySales, to, to);
+  renderCatBodyUP(rows, 'tblCatDailyUPBody');
+  renderZonaBodyUP(rows, 'tblZonaDailyUPBody');
+}
+
+function renderBudgetUPMtd(mtdSales, mtdFrom, to) {
+  const rows = computeCatZonaRowsUP(mtdSales, mtdFrom, to);
+  renderCatBodyUP(rows, 'tblCatUPBody');
+  renderZonaBodyUP(rows, 'tblZonaUPBody');
 }
 
 function renderGrowthTable(rows, isSingleDay) {
@@ -3019,7 +3265,7 @@ function buildTXTReport(d) {
 
 function updateExportPreview() {
   const d = getExportData(); const el = document.getElementById('exportPreview');
-  if (!d) { el.textContent = 'Lengkapi data filter & input untuk melihat preview laporan...'; el.classList.add('empty'); return; }
+  if (!d) { el.textContent = 'Lengkapi data filter & input untuk melihat preview laporan...'; el.classList.add('empty'); updateExportPreviewUP(); return; }
   document.getElementById('expINVDisplay').textContent = d.invTo.toLocaleString('id');
   document.getElementById('expEFTDisplay').textContent = d.eft.toFixed(2) + '%';
   document.getElementById('expEFTManualDisplay').textContent = d.eftManual.toFixed(2) + '%';
@@ -3027,6 +3273,7 @@ function updateExportPreview() {
   document.getElementById('expSalesStoreDisplay').textContent = d.salesStore.toLocaleString('id');
   document.getElementById('expDeliveryChargePctDisplay').textContent = d.deliveryChargePct.toFixed(2) + '%';
   el.classList.remove('empty'); el.textContent = buildTXTReport(d);
+  updateExportPreviewUP();
 }
 
 function copyExportPreview() {
@@ -3065,6 +3312,60 @@ function fallbackCopyToClipboard(text) {
 }
 
 function generateExportTXT() { const d = getExportData(); if (!d) { showToast('Data belum lengkap', true); return; } const blob = new Blob([buildTXTReport(d)], { type: 'text/plain;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${d.storeName.replace(/\s+/g, '_')}_Report.txt`; document.body.appendChild(a); a.click(); a.remove(); }
+
+// ──────────────────────────────────────────
+// LAPORAN TXT — BUDGET UP
+// Logika & isi grid ini SAMA PERSIS dengan grid "Laporan Utama" di atas
+// (preview + download TXT, format buildTXTReport yang sama), hanya saja
+// angka Budget (T/A, MTD T/A, Target bulan berjalan, ACH T/A) diambil dari
+// file BUDGET_UP (state.budgetUp), bukan BUDGET_CATEGORY (state.budgetCat).
+// Semua field input lain (s/d Jam, FFC, FFC Manual, New Member, Voucher CRM,
+// Delivery Charge, Sales LY, MTD LY, dsb) tetap dibaca dari field input
+// Laporan Utama yang sama — TIDAK ada field input terpisah di grid ini.
+// ──────────────────────────────────────────
+function getExportDataUP() {
+  const base = getExportData();
+  if (!base) return null;
+  const to = document.getElementById('dateTo').value;
+  const monthStart = to.slice(0, 7) + '-01';
+
+  const budgetObjUP = state.budgetUp[to] || { _total: 0, _totalMtd: 0 };
+  const budgetTo = budgetObjUP._total;
+
+  const budgetRangeUP = getBudgetCategoryTotalRange(monthStart, to, state.budgetUp);
+  const budgetMTD = budgetRangeUP.mtd || budgetRangeUP.daily;
+
+  const toDate = new Date(to + 'T00:00:00');
+  const monthEnd = new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0);
+  const fullMonthObjUP = getBudgetCategoryTotalRange(monthStart, `${monthEnd.getFullYear()}-${String(monthEnd.getMonth()+1).padStart(2,'0')}-${String(monthEnd.getDate()).padStart(2,'0')}`, state.budgetUp);
+  const budgetFullMonth = fullMonthObjUP.mtd || fullMonthObjUP.daily;
+
+  const achT = budgetFullMonth > 0 ? (budgetMTD / budgetFullMonth * 100) : 0;
+  const achA = budgetFullMonth > 0 ? (base.total / budgetFullMonth * 100) : 0;
+
+  return { ...base, budgetTo, budgetMTD, budgetFullMonth, achT, achA };
+}
+
+function updateExportPreviewUP() {
+  const el = document.getElementById('exportPreviewUP');
+  if (!el) return;
+  const d = getExportDataUP();
+  if (!d) { el.textContent = 'Lengkapi data filter & input Laporan Utama, serta import BUDGET_UP, untuk melihat preview laporan...'; el.classList.add('empty'); return; }
+  el.classList.remove('empty'); el.textContent = buildTXTReport(d);
+}
+
+function copyExportPreviewUP() {
+  const d = getExportDataUP(); if (!d) { showToast('Data belum lengkap', true); return; }
+  copyTextToClipboard(buildTXTReport(d));
+}
+
+function generateExportTXTUP() {
+  const d = getExportDataUP(); if (!d) { showToast('Data belum lengkap', true); return; }
+  const blob = new Blob([buildTXTReport(d)], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `${d.storeName.replace(/\s+/g, '_')}_Report_BudgetUP.txt`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
 
 // ──────────────────────────────────────────
 // LAPORAN SALES PROJECT & MEMBER (txt) — panel kedua di samping Laporan Utama
@@ -3974,7 +4275,8 @@ function generateBriefingPDF() {
 const DRIVE_BRIDGE_URL = 'https://script.google.com/macros/s/AKfycbyjVRDa_GooDqNk1E-rFJc3IGd7Fe7pVxYOZLxCfk56OfLwD-qSq7z_BLht3A1DtXeY/exec';
 const DRIVE_LABELS = {
   sales_ly: 'DATA_SALES_2025 (LY)',
-  budget_category: 'BUDGET_CATEGORY'
+  budget_category: 'BUDGET_CATEGORY',
+  budget_up: 'BUDGET_UP'
 };
 let driveModalCurrentType = null;
 
@@ -4148,7 +4450,8 @@ async function removeDriveLink() {
 
 const DRIVE_BTN_ID = {
   sales_ly: 'driveSalesLY',
-  budget_category: 'driveBudgetCat'
+  budget_category: 'driveBudgetCat',
+  budget_up: 'driveBudgetUp'
 };
 
 function updateDriveButtonState(type) {
@@ -4276,6 +4579,7 @@ const fileHandles = {
   sales: null,
   sales_ly: null,
   budget_category: null,
+  budget_up: null,
   stock: null
 };
 
@@ -4284,6 +4588,7 @@ const FILE_META = {
   sales:              { btn: 'btnSales',     tag: 'tagSales',     reload: 'reloadSales',     accept: ['.csv'], mime: ['text/csv','application/csv'] },
   sales_ly:           { btn: 'btnSalesLY',   tag: 'tagSalesLY',   reload: 'reloadSalesLY',   accept: ['.xlsx','.xls'], mime: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel'] },
   budget_category:    { btn: 'btnBudgetCat', tag: 'tagBudgetCat', reload: 'reloadBudgetCat', accept: ['.xlsx','.xls'], mime: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel'] },
+  budget_up:          { btn: 'btnBudgetUp',  tag: 'tagBudgetUp',  reload: 'reloadBudgetUp',  accept: ['.xlsx','.xls'], mime: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel'] },
   stock:              { btn: 'btnStock',     tag: 'tagStock',     reload: 'reloadStock',     accept: ['.xlsx','.xls'], mime: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel'] }
 };
 
