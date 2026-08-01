@@ -3005,10 +3005,32 @@ function getCaptureHeaderHeight(element) {
   return Math.max(0, Math.ceil(firstBodyRow.getBoundingClientRect().top - element.getBoundingClientRect().top));
 }
 
+// Sembunyikan label "Budget UP" dari hasil download PNG (tabel dishare ke pihak
+// lain yang tidak perlu tahu sumber budgetnya adalah BUDGET_UP) — hanya
+// memodifikasi teks sementara di elemen yang sedang di-capture, lalu
+// dikembalikan lagi ke tampilan aslinya setelah gambar selesai dibuat.
+function maskBudgetUPLabels(element) {
+  const originals = [];
+  element.querySelectorAll('h3, .table-header h3, .export-panel-title').forEach(el => {
+    if (el.textContent.includes('Budget UP')) {
+      originals.push({ el, html: el.innerHTML });
+      el.innerHTML = el.innerHTML
+        .replace(/\s*[—–-]\s*Budget UP/gi, '')
+        .replace(/Budget UP\s*/gi, '')
+        .trim();
+    }
+  });
+  return originals;
+}
+function restoreBudgetUPLabels(originals) {
+  originals.forEach(o => { o.el.innerHTML = o.html; });
+}
+
 function downloadTableAsPNG(containerId, filename) {
   const element = document.getElementById(containerId); const btn = element.querySelector('.btn-table-action');
   const timestampEl = element.querySelector('.download-timestamp'); const wrap = element.querySelector('.tbl-wrap');
   if(btn) btn.style.visibility = 'hidden';
+  const maskedUP = maskBudgetUPLabels(element);
 
   let wrapOriginal = null;
   if (wrap) { wrapOriginal = { overflow: wrap.style.overflow, width: wrap.style.width, maxWidth: wrap.style.maxWidth }; wrap.style.overflow = 'visible'; wrap.style.width = 'max-content'; wrap.style.maxWidth = 'none'; }
@@ -3027,11 +3049,13 @@ function downloadTableAsPNG(containerId, filename) {
       link.download = `${filename}_${new Date().toISOString().slice(0,10)}.png`; link.href = outputCanvas.toDataURL(); link.click();
       if (wrap && wrapOriginal) { wrap.style.overflow = wrapOriginal.overflow; wrap.style.width = wrapOriginal.width; wrap.style.maxWidth = wrapOriginal.maxWidth; }
       element.style.width = elOriginal.width; element.style.maxWidth = elOriginal.maxWidth; element.style.overflow = elOriginal.overflow;
+      restoreBudgetUPLabels(maskedUP);
       if(btn) btn.style.visibility = 'visible'; if(timestampEl) timestampEl.style.display = 'none';
       showToast('📸 Gambar PNG berhasil didownload!');
     }).catch(() => {
       if (wrap && wrapOriginal) { wrap.style.overflow = wrapOriginal.overflow; wrap.style.width = wrapOriginal.width; wrap.style.maxWidth = wrapOriginal.maxWidth; }
       element.style.width = elOriginal.width; element.style.maxWidth = elOriginal.maxWidth; element.style.overflow = elOriginal.overflow;
+      restoreBudgetUPLabels(maskedUP);
       if(btn) btn.style.visibility = 'visible'; if(timestampEl) timestampEl.style.display = 'none';
       showToast('Gagal membuat gambar PNG', true);
     });
