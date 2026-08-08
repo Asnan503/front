@@ -4,103 +4,155 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Produktivitas Kasir & Protection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
-    --ink:#1c2126;
-    --paper:#f6f5f2;
-    --line:#d8d5cd;
-    --accent:#2f6d5e;
-    --accent-soft:#e4ede9;
-    --warn:#a4472b;
-    --muted:#6b6f66;
-    --card:#ffffff;
+    --navy:#0B2E59;        /* primary navy */
+    --navy-2:#123B73;      /* navy hover/gradient */
+    --navy-deep:#081F3D;   /* darkest navy, header gradient end */
+    --blue:#1A73E8;        /* fresh Material blue accent */
+    --blue-soft:#E8F0FE;   /* light blue chip/hover tint */
+    --ink:#101B33;         /* near-navy body text */
+    --muted:#5B6B8C;       /* muted navy-grey text */
+    --line:#DCE4F2;        /* cool light border */
+    --paper:#F3F6FC;       /* app background, cool white */
+    --card:#FFFFFF;
+    --warn:#D93025;        /* Material red, kept for warnings only */
+    --accent:var(--blue);
+    --accent-soft:var(--blue-soft);
+    --shadow-1:0 1px 2px rgba(11,46,89,.08), 0 1px 6px rgba(11,46,89,.08);
+    --shadow-2:0 4px 14px rgba(11,46,89,.16);
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+    margin:0; font-family:'Roboto',Arial,sans-serif;
     background:var(--paper); color:var(--ink); font-size:14px;
+    -webkit-font-smoothing:antialiased;
   }
   header.top{
-    background:var(--ink); color:#fff; padding:18px 28px;
+    background:linear-gradient(120deg,var(--navy) 0%,var(--navy-deep) 100%);
+    color:#fff; padding:20px 28px;
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+    box-shadow:var(--shadow-2);
+    position:relative;
   }
-  header.top h1{font-size:18px; margin:0; font-weight:600; letter-spacing:.2px;}
-  header.top .sub{font-size:12px; color:#c9cdc7; margin-top:2px;}
-  .wrap{max-width:1320px; margin:0 auto; padding:20px 24px 60px;}
+  header.top::after{
+    content:''; position:absolute; left:0; right:0; bottom:-3px; height:3px;
+    background:linear-gradient(90deg,var(--blue),#5B9BFF 60%,var(--blue));
+  }
+  header.top h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.2px;}
+  header.top .sub{font-size:12.5px; color:#A9C3EE; margin-top:3px; font-weight:500;}
+  .wrap{max-width:1320px; margin:0 auto; padding:24px 24px 60px;}
 
   .panel{
-    background:var(--card); border:1px solid var(--line); border-radius:10px;
-    padding:18px 20px; margin-bottom:18px;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; margin-bottom:20px; box-shadow:var(--shadow-1);
   }
-  .panel h2{font-size:14px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);}
+  .panel h2{
+    font-size:13.5px; margin:0 0 14px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--navy); font-weight:700; padding-left:11px; position:relative;
+  }
+  .panel h2::before{
+    content:''; position:absolute; left:0; top:1px; bottom:1px; width:4px;
+    background:var(--blue); border-radius:3px;
+  }
 
   .grid-import{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media(max-width:820px){.grid-import{grid-template-columns:1fr;}}
   .filebox{
-    border:1.5px dashed var(--line); border-radius:8px; padding:14px 16px;
-    display:flex; flex-direction:column; gap:6px; background:#fbfbf9;
+    border:1.5px dashed #B9CBEC; border-radius:10px; padding:14px 16px;
+    display:flex; flex-direction:column; gap:6px; background:#F8FAFE;
   }
-  .filebox label{font-weight:600; font-size:13px;}
+  .filebox label{font-weight:700; font-size:13px; color:var(--navy);}
   .filebox small{color:var(--muted);}
   .filebox input[type=file]{font-size:12px;}
-  .status-ok{color:var(--accent); font-weight:600; font-size:12.5px;}
+  .status-ok{color:#188038; font-weight:700; font-size:12.5px;}
   .status-pending{color:var(--muted); font-size:12.5px;}
 
   .filter-row{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
   .field{display:flex; flex-direction:column; gap:4px;}
-  .field label{font-size:12px; color:var(--muted); font-weight:600;}
+  .field label{font-size:12px; color:var(--muted); font-weight:700;}
   .field input, .field select, textarea{
-    font-family:inherit; border:1px solid var(--line); border-radius:6px;
-    padding:7px 9px; font-size:13px; background:#fff; color:var(--ink);
+    font-family:inherit; border:1.5px solid var(--line); border-radius:8px;
+    padding:8px 10px; font-size:13px; background:#fff; color:var(--ink);
+    transition:border-color .15s;
   }
-  textarea{width:100%; min-height:64px; resize:vertical; font-family:monospace; font-size:12.5px;}
+  .field input:focus, .field select:focus, textarea:focus{
+    outline:none; border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft);
+  }
+  textarea{width:100%; min-height:64px; resize:vertical; font-family:'Roboto Mono',monospace; font-size:12.5px;}
   button{
-    background:var(--ink); color:#fff; border:none; border-radius:6px;
-    padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600;
+    background:var(--navy); color:#fff; border:none; border-radius:8px;
+    padding:9px 16px; font-size:13px; cursor:pointer; font-weight:700;
+    box-shadow:var(--shadow-1); transition:box-shadow .15s, background .15s, transform .05s;
+    letter-spacing:.2px;
   }
-  button.secondary{background:#fff; color:var(--ink); border:1px solid var(--line);}
-  button.accent{background:var(--accent);}
-  button:hover{opacity:.88;}
-  button:disabled{opacity:.4; cursor:not-allowed;}
+  button.secondary{background:#fff; color:var(--navy); border:1.5px solid var(--blue); box-shadow:none;}
+  button.accent{background:var(--blue);}
+  button:hover{box-shadow:var(--shadow-2); filter:brightness(1.04);}
+  button.secondary:hover{background:var(--blue-soft); filter:none;}
+  button:active{transform:translateY(1px);}
+  button:disabled{opacity:.4; cursor:not-allowed; box-shadow:none;}
 
   details.settings{margin-top:10px;}
-  details.settings summary{cursor:pointer; font-size:12.5px; color:var(--muted); font-weight:600;}
+  details.settings summary{cursor:pointer; font-size:12.5px; color:var(--blue); font-weight:700;}
 
   .kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px;}
   @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
   .kpi{
-    background:var(--card); border:1px solid var(--line); border-radius:10px;
-    padding:13px 14px;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; border-left:4px solid var(--blue); box-shadow:var(--shadow-1);
   }
-  .kpi .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px;}
-  .kpi .val{font-size:19px; font-weight:700;}
+  .kpi .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; font-weight:700;}
+  .kpi .val{font-size:20px; font-weight:900; color:var(--navy);}
+  .kpi.warn{border-left-color:var(--warn);}
   .kpi.warn .val{color:var(--warn);}
   .kpi.highlight .val{font-size:15px; line-height:1.3;}
   .kpi.highlight .note{margin-top:4px;}
-  .kpi.accent .val{color:var(--accent);}
+  .kpi.accent{border-left-color:var(--navy);}
+  .kpi.accent .val{color:var(--blue);}
 
   table{width:100%; border-collapse:collapse; font-size:12.8px;}
   thead th{
-    background:#eceae4; text-align:left; padding:8px 10px; border-bottom:2px solid var(--line);
-    position:sticky; top:0; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px; color:#3a3d38;
+    background:#EEF3FC; text-align:left; padding:9px 10px; border-bottom:2px solid var(--line);
+    position:sticky; top:0; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px; color:var(--navy); font-weight:700;
   }
-  tbody td{padding:7px 10px; border-bottom:1px solid #ece9e2;}
-  tbody tr:hover{background:#f5f4ef;}
-  tfoot td{font-weight:700; padding:8px 10px; border-top:2px solid var(--line); background:#f0efe9;}
+  tbody td{padding:8px 10px; border-bottom:1px solid #EEF2FA;}
+  tbody tr:hover{background:var(--blue-soft);}
+  tfoot td{font-weight:800; padding:9px 10px; border-top:2px solid var(--line); background:#EEF3FC; color:var(--navy);}
   .num{text-align:right; font-variant-numeric:tabular-nums;}
-  .tablewrap{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:8px;}
+  .tablewrap{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:10px;}
 
-  .panel-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .panel-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
   .panel-head h2{margin:0;}
   .empty{padding:30px; text-align:center; color:var(--muted); font-size:13px;}
-  .tag{display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--accent-soft); color:var(--accent); font-weight:700;}
+  .tag{display:inline-block; font-size:11px; padding:3px 10px; border-radius:20px; background:var(--blue-soft); color:var(--navy); font-weight:800;}
   .charts{display:grid; grid-template-columns:1.3fr 1fr; gap:16px;}
   @media(max-width:960px){.charts{grid-template-columns:1fr;}}
   canvas{max-height:280px;}
   .note{font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(8,31,61,.55);
+    align-items:center; justify-content:center; z-index:1000; padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--card); border-radius:16px; max-width:720px; width:100%;
+    max-height:85vh; overflow:auto; padding:20px 22px; box-shadow:0 20px 60px rgba(8,31,61,.35);
+  }
+  .modal-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px;}
+  .modal-title{font-size:15px; font-weight:800; color:var(--navy);}
+  .modal-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  #tblProt tbody tr{cursor:pointer;}
+  #tblProt tbody tr:hover{background:var(--blue-soft);}
+  .capture-header{font-size:16px; font-weight:800; margin-bottom:12px; color:var(--navy);}
 </style>
 </head>
 <body>
@@ -108,7 +160,7 @@
 <header class="top">
   <div>
     <h1>Produktivitas Kasir &amp; Transaksi Mitra10 Protection</h1>
-    <div class="sub">Support Back TLC — MITRA10 Tallasa City Makassar</div>
+    <div class="sub">Support Front TLC — MITRA10 Tallasa City Makassar</div>
   </div>
   <div class="sub" id="rangeLabel">Belum ada data diimpor</div>
 </header>
@@ -146,6 +198,15 @@ S11000-0000000641
 S11000-0000000645</textarea>
         </div>
         <div class="note">Kode ini dipakai untuk menyaring kasir di file XLSX (kolom Cashier ID) dan salesperson di file CSV (kolom Salesperson ID) saat mendeteksi transaksi Mitra10 Protection.</div>
+
+        <div class="field" style="max-width:640px; margin-top:14px;">
+          <label>Pemetaan Salesperson Code ≠ Cashier ID (satu baris: CashierID|Nama Kasir|Salesperson Code)</label>
+          <textarea id="salesMapText" style="min-height:90px;">S11000-0000000598|M ALIAN ASWAR|S11000-0000000607
+S11000-0000000641|NAVRA|S11000-0000000642
+S11000-0000000420|Marindah Marindah|S11000-0000000442
+S11000-0000000645|Fitri Yani|S11000-0000000663</textarea>
+        </div>
+        <div class="note">Untuk kasir yang salesperson code-nya <b>tidak sama</b> dengan Cashier ID: baris di file CSV yang kolom Salesperson ID-nya cocok dengan Salesperson Code di atas akan dihitung sebagai transaksi Protection milik Cashier ID &amp; Nama Kasir yang bersangkutan (bukan atas nama kode salesperson-nya).</div>
       </div>
     </details>
   </section>
@@ -167,7 +228,12 @@ S11000-0000000645</textarea>
   </section>
 
   <section class="panel">
-    <h2>3. Ringkasan</h2>
+    <div class="panel-head">
+      <h2 style="margin:0;">3. Ringkasan</h2>
+      <button class="secondary" id="pngRingkasan" disabled>Unduh PNG</button>
+    </div>
+    <div id="ringkasanCapture">
+    <div class="capture-header">Ringkasan Produktivitas &amp; Performance Kasir</div>
     <div class="kpi-grid">
       <div class="kpi"><div class="lbl">Kasir Aktif</div><div class="val" id="kpiKasir">0</div></div>
       <div class="kpi accent"><div class="lbl">Total Receipt Unik</div><div class="val" id="kpiReceipt">0</div></div>
@@ -193,6 +259,7 @@ S11000-0000000645</textarea>
         <div class="val" id="topFastName">-</div>
         <div class="note" id="topFastVal"></div>
       </div>
+    </div>
     </div>
   </section>
 
@@ -246,20 +313,43 @@ S11000-0000000645</textarea>
   <section class="panel">
     <div class="panel-head">
       <h2 style="margin:0;">7. Transaksi Mitra10 Protection per Kasir <span class="tag" id="protTag">0 baris</span></h2>
-      <button class="secondary" id="dlProt" disabled>Unduh CSV</button>
+      <div style="display:flex; gap:8px;">
+        <button class="secondary" id="dlProt" disabled>Unduh CSV</button>
+        <button class="secondary" id="pngProt" disabled>Unduh PNG</button>
+      </div>
     </div>
-    <div class="tablewrap"><table id="tblProt">
-      <thead><tr>
-        <th>Cashier ID (Salesperson)</th><th>Nama Kasir</th>
-        <th>Item Code</th><th>Deskripsi Item</th>
-        <th class="num">Total Qty</th><th class="num">Total Value</th>
-      </tr></thead>
-      <tbody><tr><td colspan="6" class="empty">Belum ada data — import file CSV terlebih dahulu.</td></tr></tbody>
-      <tfoot></tfoot>
-    </table></div>
-    <div class="note">Baris disaring berdasarkan kata kunci item (default "PROTECTION") dan kode kasir pada Pengaturan di atas, dicocokkan ke kolom Salesperson ID pada file CSV.</div>
+    <div id="protCapture">
+      <div class="capture-header">Transaksi mitra 10 Protection Perkasir</div>
+      <div class="tablewrap"><table id="tblProt">
+        <thead><tr>
+          <th>Cashier ID</th><th>Nama Kasir</th>
+          <th class="num">Total Qty</th><th class="num">Total Value</th>
+        </tr></thead>
+        <tbody><tr><td colspan="4" class="empty">Belum ada data — import file CSV terlebih dahulu.</td></tr></tbody>
+        <tfoot></tfoot>
+      </table></div>
+    </div>
   </section>
 
+</div>
+
+<div id="protModalOverlay" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="protModalTitle">-</div>
+        <div class="modal-sub" id="protModalSub"></div>
+      </div>
+      <button class="secondary" id="protModalClose">Tutup</button>
+    </div>
+    <div class="tablewrap" style="max-height:360px;">
+      <table>
+        <thead><tr><th>Item Code</th><th>Deskripsi Item</th><th class="num">Qty</th><th class="num">Value</th></tr></thead>
+        <tbody id="protModalBody"></tbody>
+        <tfoot id="protModalFoot"></tfoot>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -306,6 +396,20 @@ function fmtNum(n, dec=0){
 
 function getKasirCodes(){
   return $('kasirCodes').value.split('\n').map(s=>s.trim()).filter(Boolean);
+}
+
+// Peta: Salesperson Code -> { cashierId, cashierName } untuk kasir yang
+// salesperson code-nya TIDAK SAMA dengan Cashier ID-nya.
+function getSalesMapping(){
+  const map = new Map();
+  $('salesMapText').value.split('\n').forEach(line => {
+    const parts = line.split('|').map(s=>s.trim());
+    if (parts.length < 3) return;
+    const [cashierId, cashierName, salesCode] = parts;
+    if (!cashierId || !salesCode) return;
+    map.set(salesCode, { cashierId, cashierName });
+  });
+  return map;
 }
 
 /* ---------------- XLSX IMPORT ---------------- */
@@ -378,9 +482,12 @@ $('fileCsv').addEventListener('change', function(e){
       if (headerIdx === -1){ $('statusCsv').textContent = 'Format tidak dikenali (header tidak ditemukan)'; return; }
       const headers = lines[headerIdx].split(';').map(h=>h.trim());
       const idx = name => headers.indexOf(name);
+      // Kolom Sub Category dicari secara fleksibel (nama header bisa "Sub Category", "SubCategory", "Sub-Category", dll)
+      const iSubCategory = headers.findIndex(h => h.toLowerCase().replace(/[^a-z0-9]/g,'').includes('subcategory'));
       const iDate = idx('Receipt Date'), iReceipt = idx('Receipt No'), iItemNo = idx('Item No'),
             iItemName = idx('Item Name'), iQty = idx('Quantity'), iAmtIncl = idx('Amount Inculde Sales'),
             iAmtExcl = idx('Amount Exclude Sales'), iSalesId = idx('Salesperson ID'), iSalesName = idx('Salesperson Name');
+      if (iSubCategory === -1){ $('statusCsv').textContent = 'Peringatan: kolom Sub Category tidak ditemukan di header'; }
 
       const out = [];
       for (let i = headerIdx+1; i < lines.length; i++){
@@ -395,6 +502,7 @@ $('fileCsv').addEventListener('change', function(e){
           receiptNo: String(cols[iReceipt]||'').trim(),
           itemNo: String(cols[iItemNo]||'').trim(),
           itemName: String(cols[iItemName]||'').trim(),
+          subCategory: String(cols[iSubCategory]||'').trim(),
           qty: parseIDNumber(cols[iQty]),
           amtIncl: parseIDNumber(cols[iAmtIncl]),
           amtExcl: parseIDNumber(cols[iAmtExcl]),
@@ -424,6 +532,7 @@ function afterImport(){
   }
   $('btnApply').disabled = false;
   $('btnReset').disabled = false;
+  $('pngRingkasan').disabled = false;
   computeAll();
 }
 
@@ -437,7 +546,7 @@ $('btnReset').addEventListener('click', function(){
   computeAll();
 });
 
-let lastDaily = [], lastSummary = [], lastProt = [];
+let lastDaily = [], lastSummary = [], lastProt = [], lastProtDebug = [], lastProtDetail = {};
 
 function computeAll(){
   kasirSet = new Set(getKasirCodes());
@@ -500,26 +609,67 @@ function computeAll(){
   lastSummary = Array.from(sumMap.values()).sort((a,b)=>b.receipts-a.receipts);
 
   // ---- protection csv ----
+  // Kunci deteksi Protection: kolom Sub Category = "Protection" (bukan berdasarkan nama item)
   const keyword = 'PROTECTION';
-  const filteredC = csvRows.filter(r =>
-    kasirSet.has(r.salesId) &&
-    r.itemName.toUpperCase().includes(keyword) &&
-    (!from || r.dateStr >= from) && (!to || r.dateStr <= to)
-  );
+  const salesMap = getSalesMapping(); // salesperson code (≠ cashier ID) -> {cashierId, cashierName}
+
+  const filteredC = csvRows.filter(r => {
+    const mapped = salesMap.get(r.salesId);
+    const matchKasir = kasirSet.has(r.salesId) || (mapped && kasirSet.has(mapped.cashierId));
+    return matchKasir &&
+      r.subCategory.toUpperCase().includes(keyword) &&
+      (!from || r.dateStr >= from) && (!to || r.dateStr <= to);
+  });
   const protMap = new Map();
+  const protDetailMap = {}; // cashierId -> Map(itemNo -> {itemNo, itemName, qty, value})
   filteredC.forEach(r => {
-    const key = r.salesId + '|' + r.itemNo;
+    const mapped = salesMap.get(r.salesId);
+    // Jika salesperson code kasir ini berbeda dari Cashier ID-nya, transaksi
+    // dialihkan ke Cashier ID & Nama Kasir yang sebenarnya (bukan atas nama kode salesperson).
+    const dispId = mapped ? mapped.cashierId : r.salesId;
+    const dispName = mapped ? mapped.cashierName : r.salesName;
+    const key = dispId; // agregasi total per kasir untuk seluruh periode (tanpa rincian per item)
     if (!protMap.has(key)){
       protMap.set(key, {
-        salesId: r.salesId, salesName: r.salesName, itemNo: r.itemNo, itemName: r.itemName,
+        salesId: dispId, salesName: dispName,
         qty: 0, value: 0
       });
     }
     const p = protMap.get(key);
     p.qty += r.qty;
     p.value += r.amtIncl;
+
+    // simpan rincian per item untuk ditampilkan di popup saat baris diklik
+    if (!protDetailMap[dispId]) protDetailMap[dispId] = new Map();
+    const dMap = protDetailMap[dispId];
+    if (!dMap.has(r.itemNo)){
+      dMap.set(r.itemNo, { itemNo: r.itemNo, itemName: r.itemName, qty: 0, value: 0 });
+    }
+    const di = dMap.get(r.itemNo);
+    di.qty += r.qty;
+    di.value += r.amtIncl;
   });
   lastProt = Array.from(protMap.values()).sort((a,b)=> b.qty - a.qty);
+  lastProtDetail = {};
+  Object.keys(protDetailMap).forEach(cid => {
+    lastProtDetail[cid] = Array.from(protDetailMap[cid].values()).sort((a,b)=>b.qty-a.qty);
+  });
+
+  // ---- debug: semua Salesperson ID yang jual "PROTECTION" pada periode ini, TANPA filter kasir ----
+  // Dipakai sebagai bantuan diagnosa kalau lastProt kosong (kode di Pengaturan tidak cocok dengan data CSV).
+  const debugFiltered = csvRows.filter(r =>
+    r.subCategory.toUpperCase().includes(keyword) &&
+    (!from || r.dateStr >= from) && (!to || r.dateStr <= to)
+  );
+  const debugMap = new Map();
+  debugFiltered.forEach(r => {
+    const key = r.salesId;
+    if (!debugMap.has(key)) debugMap.set(key, { salesId: r.salesId, salesName: r.salesName, qty:0, rows:0 });
+    const d = debugMap.get(key);
+    d.qty += r.qty;
+    d.rows += 1;
+  });
+  lastProtDebug = Array.from(debugMap.values()).sort((a,b)=>b.qty-a.qty);
 
   renderKpi();
   renderDailyTable();
@@ -617,21 +767,34 @@ function renderProtTable(){
   const tf = document.querySelector('#tblProt tfoot');
   $('protTag').textContent = lastProt.length + ' baris';
   if (lastProt.length === 0){
-    tb.innerHTML = '<tr><td colspan="6" class="empty">Tidak ada transaksi Protection ditemukan untuk kode kasir & periode ini.</td></tr>';
+    if (lastProtDebug.length > 0){
+      tb.innerHTML = `<tr><td colspan="4" class="empty" style="text-align:left;">
+        Tidak ada baris yang cocok dengan kode kasir di Pengaturan. Namun ditemukan
+        <b>${lastProtDebug.length} Salesperson ID</b> lain dengan Sub Category "Protection" pada periode ini —
+        cek apakah kodenya perlu ditambahkan ke daftar Cashier ID atau ke Pemetaan Salesperson Code:
+        <div style="margin-top:8px; max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:6px;">
+        <table style="width:100%;"><thead><tr><th>Salesperson ID</th><th>Nama</th><th class="num">Qty</th><th class="num">Baris</th></tr></thead>
+        <tbody>${lastProtDebug.map(d=>`<tr><td>${d.salesId}</td><td>${d.salesName}</td><td class="num">${fmtNum(d.qty)}</td><td class="num">${d.rows}</td></tr>`).join('')}</tbody>
+        </table></div>
+      </td></tr>`;
+    } else {
+      tb.innerHTML = '<tr><td colspan="4" class="empty">Tidak ada transaksi dengan Sub Category "Protection" ditemukan sama sekali pada periode ini (cek nama kolom Sub Category / tanggal / isi file CSV).</td></tr>';
+    }
     tf.innerHTML = '';
     $('dlProt').disabled = true;
+    $('pngProt').disabled = true;
     return;
   }
-  tb.innerHTML = lastProt.map(p => `<tr>
+  tb.innerHTML = lastProt.map(p => `<tr data-cashier="${p.salesId}">
     <td>${p.salesId}</td><td>${p.salesName}</td>
-    <td>${p.itemNo}</td><td>${p.itemName}</td>
     <td class="num">${fmtNum(p.qty)}</td>
     <td class="num">${fmtRp(p.value)}</td>
   </tr>`).join('');
   const totQty = lastProt.reduce((a,p)=>a+p.qty,0);
   const totVal = lastProt.reduce((a,p)=>a+p.value,0);
-  tf.innerHTML = `<tr><td colspan="4">TOTAL</td><td class="num">${fmtNum(totQty)}</td><td class="num">${fmtRp(totVal)}</td></tr>`;
+  tf.innerHTML = `<tr><td colspan="2">TOTAL</td><td class="num">${fmtNum(totQty)}</td><td class="num">${fmtRp(totVal)}</td></tr>`;
   $('dlProt').disabled = false;
+  $('pngProt').disabled = false;
 }
 
 function renderCharts(){
@@ -647,7 +810,7 @@ function renderCharts(){
   if (chartDaily) chartDaily.destroy();
   chartDaily = new Chart($('chartReceiptPerDay'), {
     type:'bar',
-    data:{ labels: dates, datasets:[{ label:'Total Receipt Unik', data: receiptVals, backgroundColor:'#2f6d5e' }]},
+    data:{ labels: dates, datasets:[{ label:'Total Receipt Unik', data: receiptVals, backgroundColor:'#1A73E8' }]},
     options:{ responsive:true, plugins:{title:{display:true, text:'Total Receipt Unik per Hari (semua kasir)'}, legend:{display:false}}, scales:{y:{beginAtZero:true}} }
   });
 
@@ -656,7 +819,7 @@ function renderCharts(){
   if (chartProt) chartProt.destroy();
   chartProt = new Chart($('chartProtQty'), {
     type:'bar',
-    data:{ labels: protLabels, datasets:[{ label:'Qty Protection', data: protVals, backgroundColor:'#a4472b' }]},
+    data:{ labels: protLabels, datasets:[{ label:'Qty Protection', data: protVals, backgroundColor:'#0B2E59' }]},
     options:{ responsive:true, indexAxis:'y', plugins:{title:{display:true, text:'Qty Protection per Kasir'}, legend:{display:false}}, scales:{x:{beginAtZero:true}} }
   });
 }
@@ -692,9 +855,72 @@ $('dlSummary').addEventListener('click', ()=>{
 });
 $('dlProt').addEventListener('click', ()=>{
   downloadCsv('transaksi_protection_kasir.csv',
-    ['Cashier ID','Nama Kasir','Item Code','Deskripsi','Total Qty','Total Value'],
-    lastProt.map(p=>[p.salesId,p.salesName,p.itemNo,p.itemName,p.qty,Math.round(p.value)])
+    ['Cashier ID','Nama Kasir','Total Qty','Total Value'],
+    lastProt.map(p=>[p.salesId,p.salesName,p.qty,Math.round(p.value)])
   );
+});
+
+/* ---------------- PNG DOWNLOAD ---------------- */
+async function downloadElementAsPng(elId, filename){
+  const el = document.getElementById(elId);
+  if (!el || typeof html2canvas === 'undefined') return;
+  // hilangkan sementara batas tinggi/scroll pada tablewrap di dalam elemen agar seluruh isi ter-capture
+  const wraps = el.querySelectorAll('.tablewrap');
+  const prevStyles = Array.from(wraps).map(w => ({ maxHeight:w.style.maxHeight, overflow:w.style.overflow }));
+  wraps.forEach(w => { w.style.maxHeight = 'none'; w.style.overflow = 'visible'; });
+  try{
+    const canvas = await html2canvas(el, { backgroundColor:'#ffffff', scale:2 });
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  } catch(err){
+    alert('Gagal membuat PNG: ' + err.message);
+  } finally {
+    wraps.forEach((w,i) => { w.style.maxHeight = prevStyles[i].maxHeight; w.style.overflow = prevStyles[i].overflow; });
+  }
+}
+
+$('pngProt').addEventListener('click', ()=> downloadElementAsPng('protCapture', 'transaksi_protection_per_kasir.png'));
+$('pngRingkasan').addEventListener('click', ()=> downloadElementAsPng('ringkasanCapture', 'ringkasan_kasir.png'));
+
+/* ---------------- MODAL DETAIL ITEM PROTECTION PER KASIR ---------------- */
+document.querySelector('#tblProt tbody').addEventListener('click', function(e){
+  const tr = e.target.closest('tr[data-cashier]');
+  if (!tr) return;
+  openProtModal(tr.getAttribute('data-cashier'));
+});
+
+function openProtModal(cashierId){
+  const p = lastProt.find(x => x.salesId === cashierId);
+  const detail = lastProtDetail[cashierId] || [];
+  $('protModalTitle').textContent = (p ? p.salesName : '') || cashierId;
+  $('protModalSub').textContent = `${cashierId} — ${detail.length} jenis item Protection`;
+  if (detail.length === 0){
+    $('protModalBody').innerHTML = '<tr><td colspan="4" class="empty">Tidak ada rincian item.</td></tr>';
+    $('protModalFoot').innerHTML = '';
+  } else {
+    $('protModalBody').innerHTML = detail.map(d => `<tr>
+      <td>${d.itemNo}</td><td>${d.itemName}</td>
+      <td class="num">${fmtNum(d.qty)}</td>
+      <td class="num">${fmtRp(d.value)}</td>
+    </tr>`).join('');
+    const totQty = detail.reduce((a,d)=>a+d.qty,0);
+    const totVal = detail.reduce((a,d)=>a+d.value,0);
+    $('protModalFoot').innerHTML = `<tr><td colspan="2">TOTAL</td><td class="num">${fmtNum(totQty)}</td><td class="num">${fmtRp(totVal)}</td></tr>`;
+  }
+  $('protModalOverlay').classList.add('open');
+}
+
+function closeProtModal(){
+  $('protModalOverlay').classList.remove('open');
+}
+$('protModalClose').addEventListener('click', closeProtModal);
+$('protModalOverlay').addEventListener('click', function(e){
+  if (e.target === $('protModalOverlay')) closeProtModal();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeProtModal();
 });
 </script>
 </body>
