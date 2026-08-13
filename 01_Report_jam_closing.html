@@ -1072,7 +1072,7 @@
       <button class="btn-table-action" onclick="downloadTableAsPNG('captureCatTable', 'Realisasi_Kategori_Harian_MTD')">📸 Download PNG</button>
     </div>
     <div class="tbl-wrap"><table id="tblCat">
-      <thead><tr><th>Kategori</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th><th>Progress MTD</th></tr></thead>
+      <thead><tr><th>Kategori</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Selisih Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th></tr></thead>
       <tbody id="tblCatBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import DATA_SALES untuk menampilkan data</p></div></td></tr></tbody>
     </table></div>
 
@@ -1080,7 +1080,7 @@
       <h3>Realisasi PerZonasi (Harian & MTD)</h3>
     </div>
     <div class="tbl-wrap"><table id="tblZona">
-      <thead><tr><th>Zona</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th><th>Progress MTD</th></tr></thead>
+      <thead><tr><th>Zona</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Selisih Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th></tr></thead>
       <tbody id="tblZonaBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import DATA_SALES untuk menampilkan data</p></div></td></tr></tbody>
     </table></div>
   </div>
@@ -1093,7 +1093,7 @@
       <button class="btn-table-action" onclick="downloadTableAsPNG('captureCatTableUP', 'Realisasi_Kategori_Harian_MTD_BudgetUP')">📸 Download PNG</button>
     </div>
     <div class="tbl-wrap"><table id="tblCatUP">
-      <thead><tr><th>Kategori</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th><th>Progress MTD</th></tr></thead>
+      <thead><tr><th>Kategori</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Selisih Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th></tr></thead>
       <tbody id="tblCatUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
     </table></div>
 
@@ -1101,7 +1101,7 @@
       <h3>Realisasi PerZonasi — Budget UP (Harian & MTD)</h3>
     </div>
     <div class="tbl-wrap"><table id="tblZonaUP">
-      <thead><tr><th>Zona</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th><th>Progress MTD</th></tr></thead>
+      <thead><tr><th>Zona</th><th>Budget Harian</th><th>Realisasi Harian</th><th>% Real Harian</th><th>Selisih Harian</th><th>Budget MTD</th><th>Realisasi MTD</th><th>% Real MTD</th><th>Selisih MTD</th></tr></thead>
       <tbody id="tblZonaUPBody"><tr><td colspan="9"><div class="no-data"><div class="icon">📥</div><p>Import BUDGET_UP untuk menampilkan data</p></div></td></tr></tbody>
     </table></div>
   </div>
@@ -2138,6 +2138,7 @@ function renderCatTable(dailySales, mtdSales, mtdSalesLY, mtdFrom, to) {
       cat,
       real: realMTD, bDaily, realDaily, bMTD,
       pctDaily: bDaily > 0 ? (realDaily / bDaily) * 100 : 0,
+      selisihDaily: realDaily - bDaily,
       targetAcuan: bMTD,
       pct: bMTD > 0 ? (realMTD / bMTD) * 100 : 0,
       selisih: realMTD - bMTD
@@ -2163,14 +2164,15 @@ function renderCatTable(dailySales, mtdSales, mtdSalesLY, mtdFrom, to) {
       <td>${formatJustNumber(r.bDaily)}</td>
       <td><strong>${formatJustNumber(r.realDaily)}</strong></td>
       <td>${pctBadge(r.pctDaily)}</td>
+      <td style="color:${r.selisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(r.selisihDaily))} ${r.selisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(r.bMTD)}</td>
       <td><strong>${formatJustNumber(r.real)}</strong></td>
       <td>${pctBadge(r.pct)}</td>
       <td style="color:${r.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(r.selisih))} ${r.selisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(r.pct, 100)}%;background:${barColor(r.pct)}"></div></div></td>
     </tr>`).join('');
 
   const totalPctDaily = totalBDaily > 0 ? (totalRealDaily / totalBDaily) * 100 : 0;
+  const totalSelisihDaily = totalRealDaily - totalBDaily;
   const totalPct = totalBMTD > 0 ? (totalRealMTD / totalBMTD) * 100 : 0;
   const totalSelisih = totalRealMTD - totalBMTD;
 
@@ -2180,11 +2182,11 @@ function renderCatTable(dailySales, mtdSales, mtdSalesLY, mtdFrom, to) {
       <td>${formatJustNumber(totalBDaily)}</td>
       <td>${formatJustNumber(totalRealDaily)}</td>
       <td>${pctBadge(totalPctDaily)}</td>
+      <td style="color:${totalSelisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisihDaily))} ${totalSelisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(totalBMTD)}</td>
       <td>${formatJustNumber(totalRealMTD)}</td>
       <td>${pctBadge(totalPct)}</td>
       <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
     </tr>`;
 
   tbody.innerHTML = html;
@@ -2229,6 +2231,7 @@ function renderZonaTable(rows) {
     return {
       zona: z.zona, realDaily, bDaily, realMTD, bMTD,
       pctDaily: bDaily > 0 ? (realDaily / bDaily * 100) : 0,
+      selisihDaily: realDaily - bDaily,
       pct: bMTD > 0 ? (realMTD / bMTD * 100) : 0,
       selisih: realMTD - bMTD,
       // dipakai oleh Executive Summary (LAST.zonaResults)
@@ -2240,6 +2243,7 @@ function renderZonaTable(rows) {
   let totalRealDaily = 0, totalBDaily = 0, totalRealMTD = 0, totalBMTD = 0;
   zonaResults.forEach(z => { totalRealDaily += z.realDaily; totalBDaily += z.bDaily; totalRealMTD += z.realMTD; totalBMTD += z.bMTD; });
   const totalPctDaily = totalBDaily > 0 ? (totalRealDaily / totalBDaily * 100) : 0;
+  const totalSelisihDaily = totalRealDaily - totalBDaily;
   const totalPct = totalBMTD > 0 ? (totalRealMTD / totalBMTD * 100) : 0;
   const totalSelisih = totalRealMTD - totalBMTD;
 
@@ -2249,11 +2253,11 @@ function renderZonaTable(rows) {
       <td>${formatJustNumber(z.bDaily)}</td>
       <td><strong>${formatJustNumber(z.realDaily)}</strong></td>
       <td>${pctBadge(z.pctDaily)}</td>
+      <td style="color:${z.selisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(z.selisihDaily))} ${z.selisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(z.bMTD)}</td>
       <td><strong>${formatJustNumber(z.realMTD)}</strong></td>
       <td>${pctBadge(z.pct)}</td>
       <td style="color:${z.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(z.selisih))} ${z.selisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(z.pct, 100)}%;background:${barColor(z.pct)}"></div></div></td>
     </tr>`).join('');
 
   html += `
@@ -2262,11 +2266,11 @@ function renderZonaTable(rows) {
       <td>${formatJustNumber(totalBDaily)}</td>
       <td>${formatJustNumber(totalRealDaily)}</td>
       <td>${pctBadge(totalPctDaily)}</td>
+      <td style="color:${totalSelisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisihDaily))} ${totalSelisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(totalBMTD)}</td>
       <td>${formatJustNumber(totalRealMTD)}</td>
       <td>${pctBadge(totalPct)}</td>
       <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
     </tr>`;
 
   tbody.innerHTML = html;
@@ -2304,6 +2308,7 @@ function computeCatZonaRowsUP(dailySales, mtdSales, mtdFrom, to) {
     return {
       cat, realDaily, bDaily, real: realMTD, targetAcuan: bMTD,
       pctDaily: bDaily > 0 ? (realDaily / bDaily) * 100 : 0,
+      selisihDaily: realDaily - bDaily,
       pct: bMTD > 0 ? (realMTD / bMTD) * 100 : 0,
       selisih: realMTD - bMTD
     };
@@ -2324,11 +2329,11 @@ function renderCatBodyUP(rows, tbodyId) {
       <td>${formatJustNumber(r.bDaily)}</td>
       <td><strong>${formatJustNumber(r.realDaily)}</strong></td>
       <td>${pctBadge(r.pctDaily)}</td>
+      <td style="color:${r.selisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(r.selisihDaily))} ${r.selisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(r.targetAcuan)}</td>
       <td><strong>${formatJustNumber(r.real)}</strong></td>
       <td>${pctBadge(r.pct)}</td>
       <td style="color:${r.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(r.selisih))} ${r.selisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(r.pct, 100)}%;background:${barColor(r.pct)}"></div></div></td>
     </tr>`).join('');
 
   const totalBDaily = rows.reduce((s, r) => s + r.bDaily, 0);
@@ -2336,6 +2341,7 @@ function renderCatBodyUP(rows, tbodyId) {
   const totalBudget = rows.reduce((s, r) => s + r.targetAcuan, 0);
   const totalReal = rows.reduce((s, r) => s + r.real, 0);
   const totalPctDaily = totalBDaily > 0 ? (totalRealDaily / totalBDaily * 100) : 0;
+  const totalSelisihDaily = totalRealDaily - totalBDaily;
   const totalPct = totalBudget > 0 ? (totalReal / totalBudget * 100) : 0;
   const totalSelisih = totalReal - totalBudget;
 
@@ -2345,11 +2351,11 @@ function renderCatBodyUP(rows, tbodyId) {
       <td>${formatJustNumber(totalBDaily)}</td>
       <td>${formatJustNumber(totalRealDaily)}</td>
       <td>${pctBadge(totalPctDaily)}</td>
+      <td style="color:${totalSelisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisihDaily))} ${totalSelisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(totalBudget)}</td>
       <td>${formatJustNumber(totalReal)}</td>
       <td>${pctBadge(totalPct)}</td>
       <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
     </tr>`;
 
   tbody.innerHTML = html;
@@ -2372,6 +2378,7 @@ function renderZonaBodyUP(rows, tbodyId) {
     return {
       zona: z.zona, realDaily, bDaily, realMTD, bMTD,
       pctDaily: bDaily > 0 ? (realDaily / bDaily * 100) : 0,
+      selisihDaily: realDaily - bDaily,
       pct: bMTD > 0 ? (realMTD / bMTD * 100) : 0,
       selisih: realMTD - bMTD
     };
@@ -2380,6 +2387,7 @@ function renderZonaBodyUP(rows, tbodyId) {
   let totalRealDaily = 0, totalBDaily = 0, totalRealMTD = 0, totalBMTD = 0;
   zonaResults.forEach(z => { totalRealDaily += z.realDaily; totalBDaily += z.bDaily; totalRealMTD += z.realMTD; totalBMTD += z.bMTD; });
   const totalPctDaily = totalBDaily > 0 ? (totalRealDaily / totalBDaily * 100) : 0;
+  const totalSelisihDaily = totalRealDaily - totalBDaily;
   const totalPct = totalBMTD > 0 ? (totalRealMTD / totalBMTD * 100) : 0;
   const totalSelisih = totalRealMTD - totalBMTD;
 
@@ -2389,11 +2397,11 @@ function renderZonaBodyUP(rows, tbodyId) {
       <td>${formatJustNumber(z.bDaily)}</td>
       <td><strong>${formatJustNumber(z.realDaily)}</strong></td>
       <td>${pctBadge(z.pctDaily)}</td>
+      <td style="color:${z.selisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(z.selisihDaily))} ${z.selisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(z.bMTD)}</td>
       <td><strong>${formatJustNumber(z.realMTD)}</strong></td>
       <td>${pctBadge(z.pct)}</td>
       <td style="color:${z.selisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(z.selisih))} ${z.selisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(z.pct, 100)}%;background:${barColor(z.pct)}"></div></div></td>
     </tr>`).join('');
 
   html += `
@@ -2402,11 +2410,11 @@ function renderZonaBodyUP(rows, tbodyId) {
       <td>${formatJustNumber(totalBDaily)}</td>
       <td>${formatJustNumber(totalRealDaily)}</td>
       <td>${pctBadge(totalPctDaily)}</td>
+      <td style="color:${totalSelisihDaily >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisihDaily))} ${totalSelisihDaily >= 0 ? '▲' : '▼'}</td>
       <td>${formatJustNumber(totalBMTD)}</td>
       <td>${formatJustNumber(totalRealMTD)}</td>
       <td>${pctBadge(totalPct)}</td>
       <td style="color:${totalSelisih >= 0 ? 'var(--accent2)' : 'var(--danger)'}">${formatJustNumber(Math.abs(totalSelisih))} ${totalSelisih >= 0 ? '▲' : '▼'}</td>
-      <td><div class="bar-mini"><div class="bar-mini-fill" style="width:${Math.min(totalPct, 100)}%;background:${barColor(totalPct)}"></div></div></td>
     </tr>`;
 
   tbody.innerHTML = html;
