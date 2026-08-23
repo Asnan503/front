@@ -3,429 +3,414 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Proses Laporan Front</title>
+<title>Support Front TLC Makassar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --mist:#F5FAFA;
-    --panel:#FFFFFF;
-    --ink:#12333F;
-    --ink-soft:#4C6B75;
-    --teal:#177E8C;
-    --teal-deep:#0E5560;
-    --coral:#FF8A5B;
-    --coral-soft:#FFE3D3;
-    --aqua-pale:#E1F1F1;
-    --sun:#FFC857;
-    --line:#D9E9E9;
-    --radius:18px;
-    --shadow: 0 20px 44px -28px rgba(18,51,63,0.35);
+    --sky:#2EA8DE;
+    --sky-deep:#1C7FB0;
+    --sun:#FFC94A;
+    --coral:#FF6F61;
+    --mint:#3FCFB5;
+    --ink:#152944;
+    --cloud:#F4FAFF;
+    --white:#FFFFFF;
   }
 
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
 
   body{
-    margin:0;
-    background:var(--mist);
-    background-image:
-      radial-gradient(circle at 10% -10%, rgba(23,126,140,0.10), transparent 45%),
-      radial-gradient(circle at 100% 0%, rgba(255,138,91,0.10), transparent 40%);
+    font-family:'Plus Jakarta Sans', sans-serif;
     color:var(--ink);
-    font-family:'Inter', sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-
-  .wrap{
-    max-width:1080px;
-    margin:0 auto;
-    padding:0 28px 80px;
-  }
-
-  /* ===== Top bar ===== */
-  .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:26px 28px;
-    max-width:1080px;
-    margin:0 auto;
-  }
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    font-family:'Inter', sans-serif;
-    font-size:13px;
-    letter-spacing:0.06em;
-    color:var(--ink-soft);
-    text-transform:uppercase;
-  }
-  .brand .dot{
-    width:10px;height:10px;border-radius:50%;
-    background:var(--coral);
-    box-shadow:0 0 0 4px var(--coral-soft);
-  }
-  .clock-pill{
-    font-family:'Inter', sans-serif;
-    font-size:12px;
-    color:var(--teal-deep);
-    background:var(--aqua-pale);
-    border:1px solid var(--line);
-    padding:6px 14px;
-    border-radius:999px;
-  }
-
-  h1.page-title{
-    font-family:'Inter', sans-serif;
-    font-weight:600;
-    font-size:clamp(28px, 4vw, 40px);
-    line-height:1.1;
-    margin:8px 0 0;
-    color:var(--teal-deep);
-  }
-  .page-sub{
-    margin:10px 0 0;
-    color:var(--ink-soft);
-    font-size:15px;
-    max-width:560px;
-  }
-
-  /* ===== Hero: CS welcome banner ===== */
-  .hero{
+    background:
+      radial-gradient(circle at 12% 8%, rgba(255,201,74,0.35), transparent 40%),
+      radial-gradient(circle at 88% 18%, rgba(63,207,181,0.30), transparent 42%),
+      radial-gradient(circle at 50% 100%, rgba(255,111,97,0.18), transparent 45%),
+      linear-gradient(180deg, #EAF7FF 0%, #F4FAFF 40%, #FFF9EC 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    overflow-x:hidden;
     position:relative;
-    margin-top:26px;
-    border-radius:24px;
-    padding:36px 34px;
-    background:linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
-    color:#EAF7F6;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    gap:28px;
-    box-shadow:var(--shadow);
-  }
-  .hero::before{
-    content:"";
-    position:absolute;
-    right:-60px; top:-60px;
-    width:220px; height:220px;
-    border-radius:50%;
-    background:radial-gradient(circle, rgba(255,200,87,0.35), transparent 70%);
-  }
-  .hero::after{
-    content:"";
-    position:absolute;
-    left:-40px; bottom:-70px;
-    width:180px; height:180px;
-    border-radius:50%;
-    background:radial-gradient(circle, rgba(255,138,91,0.28), transparent 70%);
   }
 
-  .headset{
-    flex:none;
-    width:86px; height:86px;
+  /* ---------- Ambient floating bubbles (chat / customer-service motif) ---------- */
+  .bubble-field{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
+  }
+  .bubble{
+    position:absolute;
+    bottom:-120px;
+    border-radius:50%;
+    opacity:0.55;
+    animation:floatUp linear infinite;
+  }
+  @keyframes floatUp{
+    0%{ transform:translateY(0) translateX(0) rotate(0deg); opacity:0; }
+    10%{ opacity:0.5; }
+    90%{ opacity:0.35; }
+    100%{ transform:translateY(-120vh) translateX(40px) rotate(20deg); opacity:0; }
+  }
+
+  header.hero{
     position:relative;
     z-index:1;
+    max-width:1100px;
+    margin:0 auto;
+    padding:64px 24px 40px;
+    text-align:center;
   }
-  .headset svg{width:100%;height:100%;display:block;}
 
-  .hero-copy{position:relative; z-index:1;}
-  .greeting-tag{
+  .status-pill{
     display:inline-flex;
     align-items:center;
     gap:8px;
-    font-family:'Inter', sans-serif;
-    font-size:12px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    background:rgba(255,255,255,0.12);
-    border:1px solid rgba(255,255,255,0.25);
-    padding:6px 12px;
+    background:var(--white);
+    border:1px solid rgba(21,41,68,0.08);
+    padding:8px 18px;
     border-radius:999px;
-    margin-bottom:12px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--sky-deep);
+    box-shadow:0 8px 20px rgba(28,127,176,0.12);
+    margin-bottom:28px;
   }
-  .greeting-tag .pulse{
-    width:7px;height:7px;border-radius:50%;
-    background:var(--sun);
-    box-shadow:0 0 0 0 rgba(255,200,87,0.6);
-    animation:pulse 2.2s infinite;
+  .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--mint);
+    box-shadow:0 0 0 rgba(63,207,181,0.5);
+    animation:pulse 1.8s ease-out infinite;
   }
   @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(255,200,87,0.55);}
-    70%{box-shadow:0 0 0 9px rgba(255,200,87,0);}
-    100%{box-shadow:0 0 0 0 rgba(255,200,87,0);}
+    0%{ box-shadow:0 0 0 0 rgba(63,207,181,0.55); }
+    70%{ box-shadow:0 0 0 10px rgba(63,207,181,0); }
+    100%{ box-shadow:0 0 0 0 rgba(63,207,181,0); }
   }
 
-  .hero h2{
-    font-family:'Inter', sans-serif;
+  .headset-wrap{
+    width:96px; height:96px;
+    margin:0 auto 22px;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .headset-wrap svg{
+    animation:bob 3.2s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0) rotate(-2deg); }
+    50%{ transform:translateY(-8px) rotate(2deg); }
+  }
+
+  h1.title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:clamp(34px, 5.5vw, 58px);
+    line-height:1.08;
+    color:var(--ink);
+    letter-spacing:-0.5px;
+  }
+  h1.title .accent{
+    background:linear-gradient(90deg, var(--sky) 0%, var(--mint) 55%, var(--coral) 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  p.subtitle{
+    margin-top:16px;
+    font-size:clamp(16px, 2vw, 19px);
+    color:#41537A;
+    font-weight:500;
+    max-width:560px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .greet-strip{
+    margin-top:30px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:var(--white);
+    padding:12px 22px;
+    border-radius:16px;
+    box-shadow:0 10px 28px rgba(21,41,68,0.10);
     font-weight:600;
-    font-size:clamp(22px, 3vw, 30px);
-    margin:0 0 8px;
-    color:#fff;
-  }
-  .hero p{
-    margin:0;
-    color:#D9EFEE;
     font-size:14.5px;
-    max-width:480px;
-    line-height:1.6;
+    color:var(--ink);
+    border:1px solid rgba(21,41,68,0.06);
+  }
+  .typed::after{
+    content:'|';
+    animation:blink 1s step-start infinite;
+    color:var(--coral);
+    font-weight:700;
+    margin-left:2px;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* ---------- Cards grid ---------- */
+  main{
+    position:relative;
+    z-index:1;
+    max-width:1100px;
+    margin:0 auto;
+    padding:20px 24px 90px;
   }
 
-  /* ===== Section label ===== */
-  .section-head{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    margin:44px 0 18px;
-  }
-  .section-head h3{
-    font-family:'Inter', sans-serif;
-    font-size:12.5px;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--teal-deep);
-    margin:0;
-  }
-  .section-head span{
-    font-size:12.5px;
-    color:var(--ink-soft);
-    font-family:'Inter', sans-serif;
-  }
-
-  /* ===== Ticket cards ===== */
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
-    gap:18px;
+    gap:22px;
+    margin-top:20px;
   }
 
-  .ticket{
+  .card{
     position:relative;
+    background:var(--white);
+    border-radius:22px;
+    padding:26px 24px 24px;
+    text-decoration:none;
+    color:var(--ink);
+    border:1px solid rgba(21,41,68,0.06);
+    box-shadow:0 10px 26px rgba(21,41,68,0.07);
+    transition:transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    overflow:hidden;
     display:flex;
     flex-direction:column;
     gap:14px;
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:22px 22px 20px;
-    text-decoration:none;
-    color:var(--ink);
-    isolation:isolate;
-    overflow:hidden;
-    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
-    opacity:0;
-    transform:translateY(10px);
-    animation:rise .5s ease forwards;
   }
-  .ticket:nth-child(1){animation-delay:.05s;}
-  .ticket:nth-child(2){animation-delay:.12s;}
-  .ticket:nth-child(3){animation-delay:.19s;}
-  .ticket:nth-child(4){animation-delay:.26s;}
-  .ticket:nth-child(5){animation-delay:.33s;}
-
-  @keyframes rise{
-    to{opacity:1; transform:translateY(0);}
-  }
-
-  .ticket::before{
-    content:"";
+  .card::before{
+    content:'';
     position:absolute;
-    left:0; top:0; bottom:0;
-    width:4px;
-    background:var(--accent, var(--teal));
-    transition:width .22s ease;
+    top:0; left:0; right:0;
+    height:5px;
+    background:var(--bar, var(--sky));
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform .35s ease;
   }
-  .ticket:hover{
-    transform:translateY(-4px);
-    box-shadow:var(--shadow);
+  .card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 22px 40px rgba(21,41,68,0.16);
     border-color:transparent;
   }
-  .ticket:hover::before{width:6px;}
-  .ticket:focus-visible{
-    outline:3px solid var(--coral);
-    outline-offset:2px;
-  }
+  .card:hover::before{ transform:scaleX(1); }
 
-  .ticket-top{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .ticket-num{
-    font-family:'Inter', sans-serif;
-    font-size:12px;
-    color:var(--ink-soft);
-    background:var(--aqua-pale);
-    border-radius:8px;
-    padding:3px 8px;
-  }
-  .ticket-icon{
-    width:38px; height:38px;
-    border-radius:11px;
-    background:var(--accent-soft, var(--aqua-pale));
+  .icon-badge{
+    width:54px; height:54px;
+    border-radius:16px;
     display:flex; align-items:center; justify-content:center;
-    flex:none;
+    background:var(--bar-soft, #EAF7FF);
+    transition:transform .3s ease;
   }
-  .ticket-icon svg{width:20px;height:20px;stroke:var(--accent, var(--teal));}
+  .card:hover .icon-badge{ transform:rotate(-8deg) scale(1.08); }
+  .icon-badge svg{ width:28px; height:28px; }
 
-  .ticket h4{
-    font-family:'Inter', sans-serif;
-    font-weight:600;
+  .card h3{
+    font-family:'Baloo 2', sans-serif;
     font-size:19px;
-    margin:2px 0 0;
-    color:var(--ink);
+    font-weight:700;
+    line-height:1.3;
   }
-  .ticket p{
-    margin:0;
-    font-size:13.5px;
-    color:var(--ink-soft);
+  .card p{
+    font-size:14px;
+    color:#5A6C8F;
     line-height:1.55;
+    flex-grow:1;
   }
-  .ticket-foot{
-    margin-top:auto;
-    display:flex;
+  .card .go{
+    display:inline-flex;
     align-items:center;
-    justify-content:space-between;
-    font-family:'Inter', sans-serif;
-    font-size:12px;
-    color:var(--accent, var(--teal));
-    padding-top:10px;
-    border-top:1px dashed var(--line);
+    gap:6px;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--bar, var(--sky));
   }
-  .ticket-foot .arrow{
-    transition:transform .2s ease;
+  .card .go svg{
+    width:15px; height:15px;
+    transition:transform .25s ease;
   }
-  .ticket:hover .ticket-foot .arrow{transform:translateX(4px);}
+  .card:hover .go svg{ transform:translateX(5px); }
+
+  .card .tag{
+    position:absolute;
+    top:18px; right:18px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.4px;
+    color:var(--bar, var(--sky));
+    background:var(--bar-soft, #EAF7FF);
+    padding:5px 10px;
+    border-radius:999px;
+  }
 
   footer{
-    margin-top:56px;
-    padding-top:20px;
-    border-top:1px solid var(--line);
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:10px;
-    font-size:12.5px;
-    color:var(--ink-soft);
-    font-family:'Inter', sans-serif;
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:0 24px 50px;
+    color:#6C7DA0;
+    font-size:13.5px;
   }
-
-  @media (max-width:560px){
-    .hero{flex-direction:column; align-items:flex-start;}
-    .topbar{flex-direction:column; align-items:flex-start; gap:10px;}
+  footer .wave{
+    display:inline-block;
+    animation:wave 2.2s ease-in-out infinite;
+    transform-origin:70% 70%;
+  }
+  @keyframes wave{
+    0%,100%{ transform:rotate(0deg); }
+    15%{ transform:rotate(14deg); }
+    30%{ transform:rotate(-8deg); }
+    45%{ transform:rotate(14deg); }
+    60%{ transform:rotate(-4deg); }
+    75%{ transform:rotate(10deg); }
   }
 
   @media (prefers-reduced-motion: reduce){
-    *{animation:none !important; transition:none !important;}
+    *{ animation:none !important; transition:none !important; }
   }
 </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="brand"><span class="dot"></span> Support front Tallasacity</div>
-    <div class="clock-pill" id="clock">--:--</div>
+<div class="bubble-field" id="bubbleField"></div>
+
+<header class="hero">
+  <div class="status-pill"><span class="dot"></span> Layanan aktif &middot; Region Makassar</div>
+
+  <div class="headset-wrap">
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="42" fill="#EAF7FF"/>
+      <path d="M22 44a22 22 0 0 1 44 0" stroke="#2EA8DE" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <rect x="17" y="42" width="11" height="18" rx="5.5" fill="#FF6F61"/>
+      <rect x="60" y="42" width="11" height="18" rx="5.5" fill="#3FCFB5"/>
+      <path d="M66 60v3a9 9 0 0 1-9 9h-6" stroke="#1C7FB0" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <circle cx="47" cy="72" r="4.5" fill="#FFC94A"/>
+    </svg>
   </div>
 
-  <div class="wrap">
+  <h1 class="title">Support Front <span class="accent">TLC Makassar</span></h1>
+  <p class="subtitle">Pusat proses data laporan daily — cepat, rapi, dan siap membantu tim setiap hari.</p>
 
-    <h1 class="page-title">Proses Laporan Front</h1>
-    <p class="page-sub">Tim front Tallasacity Makassar</p>
+  <div class="greet-strip">💬 <span class="typed" id="typedGreet"></span></div>
+</header>
 
-    <section class="hero">
-      <div class="headset">
-        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M32 8C18 8 8 19 8 32v10a6 6 0 0 0 6 6h2a4 4 0 0 0 4-4V34a4 4 0 0 0-4-4H10C11 20 20 12 32 12s21 8 22 18h-6a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h2a6 6 0 0 0 6-6V32C56 19 46 8 32 8Z" stroke="#EAF7F6" stroke-width="2.4" stroke-linejoin="round"/>
-          <path d="M46 52c0 3.3-6.3 6-14 6" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round"/>
-        </svg>
+<main>
+  <div class="grid">
+
+    <a class="card" href="01_Report_jam_closing.html" style="--bar:#2EA8DE; --bar-soft:#E4F4FC;">
+      <span class="tag">Monitoring</span>
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2EA8DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
       </div>
-      <div class="hero-copy">
-        <span class="greeting-tag"><span class="pulse"></span> Siap melayani</span>
-        <h2>Selamat datang kembali di meja front! 👋</h2>
-        <p>Semua proses laporan sudah rapi dalam satu tempat. Pilih kartu di bawah untuk langsung membuka form yang kamu butuhkan.</p>
+      <h3>Report Jam Closing</h3>
+      <p>Dashboard monitoring omset dan waktu closing toko, lengkap dengan grafik harian.</p>
+      <span class="go">Buka modul <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <a class="card" href="02_Proses_konfirmasi_pengiriman.html" style="--bar:#3FCFB5; --bar-soft:#E4FAF5;">
+      <span class="tag">Pengiriman</span>
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3FCFB5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="14" height="10" rx="1.5"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19.5" r="1.7"/><circle cx="18" cy="19.5" r="1.7"/></svg>
       </div>
-    </section>
+      <h3>Konfirmasi Pengiriman</h3>
+      <p>Proses konfirmasi status pengiriman pesanan pelanggan secara terpusat dan tercatat rapi.</p>
+      <span class="go">Buka modul <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
 
-    <div class="section-head">
-      <h3>Daftar Laporan</h3>
-      <span>5 entry</span>
-    </div>
+    <a class="card" href="03_Proses_awt.html" style="--bar:#FFB020; --bar-soft:#FFF4E0;">
+      <span class="tag">Harian</span>
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#E0A53B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <h3>Proses AWT Daily</h3>
+      <p>Checklist dan rekap proses AWT harian agar tidak ada langkah yang terlewat.</p>
+      <span class="go">Buka modul <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
 
-    <div class="grid">
+    <a class="card" href="04_protection_kasir.html" style="--bar:#FF6F61; --bar-soft:#FFECEA;">
+      <span class="tag">Kasir</span>
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FF6F61" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h3>Produktivitas Kasir &amp; Protection</h3>
+      <p>Pantau produktivitas kasir sekaligus data protection dalam satu tampilan ringkas.</p>
+      <span class="go">Buka modul <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
 
-      <a class="ticket" style="--accent:#177E8C; --accent-soft:#E1F1F1" href="01_Report_jam_closing.html">
-        <div class="ticket-top">
-          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
-          <span class="ticket-num">01</span>
-        </div>
-        <h4>Report 2 Jam &amp; Closing</h4>
-        <p>Rekap laporan berkala setiap 2 jam beserta laporan closing harian.</p>
-        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
-      </a>
-
-      <a class="ticket" style="--accent:#FF8A5B; --accent-soft:#FFE3D3" href="02_Proses_konfirmasi_pengiriman.html">
-        <div class="ticket-top">
-          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg></div>
-          <span class="ticket-num">02</span>
-        </div>
-        <h4>Konfirmasi Pengiriman</h4>
-        <p>Proses konfirmasi status pengiriman pesanan ke pelanggan.</p>
-        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
-      </a>
-
-      <a class="ticket" style="--accent:#0E5560; --accent-soft:#DCEEEF" href="03_Proses_awt.html">
-        <div class="ticket-top">
-          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 4v5h5"/></svg></div>
-          <span class="ticket-num">03</span>
-        </div>
-        <h4>AWT Closing</h4>
-        <p>Proses administrasi AWT saat closing toko.</p>
-        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
-      </a>
-
-      <a class="ticket" style="--accent:#C2610F; --accent-soft:#FFE3D3" href="04_protection_kasir.html">
-        <div class="ticket-top">
-          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 5-3.2 7.6-7 9-3.8-1.4-7-4-7-9V6z"/><path d="M9.5 12l2 2 3.5-3.5"/></svg></div>
-          <span class="ticket-num">04</span>
-        </div>
-        <h4>Protection Kasir</h4>
-        <p>Check Penjualan Proteksi Kasir</p>
-        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
-      </a>
-
-      <a class="ticket" style="--accent:#177E8C; --accent-soft:#E1F1F1" href="05_Rekap_omset_region.html">
-        <div class="ticket-top">
-          <div class="ticket-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>
-          <span class="ticket-num">05</span>
-        </div>
-        <h4>Rekap Omset Region 6</h4>
-        <p>Rekapitulasi omset penjualan untuk seluruh Region 6.</p>
-        <div class="ticket-foot"><span>Buka form</span><span class="arrow">&rarr;</span></div>
-      </a>
-
-    </div>
-
-    <footer>
-      <span>Dashboard Proses Laporan Front</span>
-      <span>Front Ops Team</span>
-    </footer>
+    <a class="card" href="05_Rekap_omset_region.html" style="--bar:#8B6BD1; --bar-soft:#F1EBFB;">
+      <span class="tag">Region</span>
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8B6BD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="13" y="8" width="3" height="10"/><rect x="19" y="5" width="0" height="13"/><path d="M18 5v13"/></svg>
+      </div>
+      <h3>Rekap Omset Region</h3>
+      <p>Rekapitulasi laporan omset seluruh toko di Region 6 dalam satu dashboard.</p>
+      <span class="go">Buka modul <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
 
   </div>
+</main>
+
+<footer>
+  <span class="wave">👋</span> Support Front TLC Makassar — siap bantu proses laporan daily kamu.
+</footer>
 
 <script>
-  function tick(){
-    var d = new Date();
-    var h = String(d.getHours()).padStart(2,'0');
-    var m = String(d.getMinutes()).padStart(2,'0');
-    var el = document.getElementById('clock');
-    if(el) el.textContent = h + ':' + m;
+  // Floating chat-bubble ambience
+  const field = document.getElementById('bubbleField');
+  const colors = ['#2EA8DE','#FFC94A','#FF6F61','#3FCFB5'];
+  const count = window.innerWidth < 700 ? 10 : 18;
+  for(let i=0;i<count;i++){
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 10 + Math.random()*26;
+    b.style.width = size+'px';
+    b.style.height = size+'px';
+    b.style.left = Math.random()*100+'vw';
+    b.style.background = colors[i % colors.length];
+    b.style.animationDuration = (14 + Math.random()*14)+'s';
+    b.style.animationDelay = (Math.random()*16)+'s';
+    field.appendChild(b);
   }
-  tick();
-  setInterval(tick, 1000*30);
+
+  // Typewriter greeting
+  const greetings = [
+    'Halo! Ada yang bisa kami bantu proses hari ini?',
+    'Semua laporan daily, satu pintu masuk.',
+    'Pilih modul di bawah untuk mulai kerja ✨'
+  ];
+  const el = document.getElementById('typedGreet');
+  let gi = 0, ci = 0, deleting = false;
+
+  function typeLoop(){
+    const current = greetings[gi];
+    if(!deleting){
+      ci++;
+      el.textContent = current.slice(0, ci);
+      if(ci === current.length){
+        deleting = true;
+        setTimeout(typeLoop, 1600);
+        return;
+      }
+    } else {
+      ci--;
+      el.textContent = current.slice(0, ci);
+      if(ci === 0){
+        deleting = false;
+        gi = (gi + 1) % greetings.length;
+      }
+    }
+    setTimeout(typeLoop, deleting ? 28 : 45);
+  }
+  typeLoop();
 </script>
 
 </body>
