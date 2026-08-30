@@ -210,9 +210,19 @@
     // MTD LY yang SUDAH dalam satuan Juta dengan angka 10.000-an (mis. "10.325" = 10.325 Juta),
     // bukan angka Rupiah ribuan yang perlu dikonversi. Ambang lama membuat nilai valid ini
     // ikut terbagi dan jadi salah (10.325 -> 10).
-    function parseSingleCurrency(rawVal) {
+    function parseSingleCurrency(rawVal, context) {
       let n = parseRawNumber(rawVal);
       let abs = Math.abs(n);
+      if (context === 'daily') {
+        // Sales LY harian ditulis toko sbg angka Rupiah PENUH (mis. "77,876,252" = Rp77.876.252),
+        // bukan angka yang sudah dalam satuan Juta. Ambang lama (100.000.000) membuat angka
+        // sebesar ini (puluhan juta) lolos ke cabang ÷1.000 dan tercapture salah jadi "77876".
+        // Untuk konteks harian, angka >= 1 Juta sudah pasti Rupiah penuh -> skalakan ke Juta,
+        // dan BUANG desimalnya (bukan dibulatkan ke atas) supaya "77,876,252" -> "77", bukan "78".
+        if (abs >= 1000000) return Math.trunc(n / 1000000);
+        if (abs >= 50000) return Math.round(n / 1000); // kemungkinan toko salah format (1000x)
+        return Math.round(n);
+      }
       if (abs >= 100000000) return Math.round(n / 1000000); // Rupiah penuh (miliaran+) -> Juta
       if (abs >= 50000) return Math.round(n / 1000); // Angka Juta yg tidak wajar (>50rb Juta) -> kemungkinan toko menulis format 1000x lipat (spt Cinere)
       return Math.round(n);
@@ -248,7 +258,7 @@
       if (taLyMatch) {
         let p = parsePair(taLyMatch[1], taLyMatch[2], 'daily');
         res.T = p.a; res.A = p.b;
-        res.LY = parseSingleCurrency(taLyMatch[3]);
+        res.LY = parseSingleCurrency(taLyMatch[3], 'daily');
       } else {
         let taMatch = cleanText.match(/T\/A(?:\/ACH)?\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i) || 
                       cleanText.match(/T\/A\s*:\s*([\d\.,]+)\/([\d\.,]+)/i);
@@ -264,7 +274,7 @@
           if (line.toUpperCase().includes('MTD')) continue;
           let lyMatch = line.match(/(?:Sales\s*L\s*\/?\s*Y|L\s*\/?\s*Y)\s*[:\s]\s*([\d\.,]+)/i);
           if (lyMatch) {
-            res.LY = parseSingleCurrency(lyMatch[1]);
+            res.LY = parseSingleCurrency(lyMatch[1], 'daily');
             break;
           }
         }
