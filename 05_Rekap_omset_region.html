@@ -6,6 +6,12 @@
   <title>Dashboard Rekap Laporan Region 6</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS Library untuk MEMBACA file Excel toko di browser -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- ExcelJS Library untuk MENULIS file Excel Master dengan format warna, merge cell & rumus -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- html2canvas Library untuk MENCAPTURE tabel konsolidasi menjadi gambar PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-6 font-sans">
 
@@ -16,14 +22,14 @@
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
           <i class="fa-solid me-2 fa-chart-line"></i> Dashboard Regional 6 Mitra10
         </h1>
-        <p class="text-blue-200 text-sm">Rekapitulasi Otomatis Laporan WA Pertoko</p>
+        <p class="text-blue-200 text-sm">Rekapitulasi Otomatis Laporan WA Pertoko & Konsolidasi Excel</p>
       </div>
       
       <!-- Date & Time Inputs -->
       <div class="flex flex-wrap items-center gap-3">
         <div>
           <label class="block text-xs text-blue-200 mb-1">Tanggal</label>
-          <input type="text" id="reportDate" class="bg-blue-800 border border-blue-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:outline-none focus:border-white focus:ring-1 focus:ring-white placeholder-blue-300">
+          <input type="text" id="reportDate" oninput="processAllStores(); renderMasterPreview();" class="bg-blue-800 border border-blue-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:outline-none focus:border-white focus:ring-1 focus:ring-white placeholder-blue-300">
         </div>
         <div>
           <label class="block text-xs text-blue-200 mb-1">Pukul / Jam</label>
@@ -100,6 +106,54 @@
         </div>
       </div>
     </div>
+
+    <!-- NEW SECTION: Import & Merge 9 Excel Files -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-md space-y-4">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+        <div>
+          <h2 class="text-lg font-semibold text-blue-950 flex items-center gap-2">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i> Konsolidasi 9 File Excel Toko Region 6
+          </h2>
+          <p class="text-xs text-slate-500">Pilih atau drop 9 file Excel laporan masing-masing toko untuk digabungkan ke dalam 1 file Master Excel.</p>
+        </div>
+        <button onclick="generateMasterExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-2 shadow-sm">
+          <i class="fa-solid file-arrow-down fa-download"></i> Download Master Excel Gabungan
+        </button>
+      </div>
+
+      <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center bg-slate-50 hover:bg-slate-100 transition">
+        <input type="file" id="excelFilesInput" multiple accept=".xlsx, .xls" class="hidden" onchange="handleExcelFilesSelected(this)">
+        <label for="excelFilesInput" class="cursor-pointer flex flex-col items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-900"></i>
+          <span class="text-sm font-semibold text-blue-900">Klik untuk memilih file Excel (Bisa pilih sekaligus 9 file)</span>
+          <span class="text-xs text-slate-400" id="fileCountLabel">Belum ada file yang dipilih</span>
+        </label>
+      </div>
+
+      <!-- Preview status file toko -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-9 gap-2 pt-2" id="fileStatusGrid">
+        <!-- Diisi secara dinamis -->
+      </div>
+
+      <!-- Preview Tabel Hasil Konsolidasi 9 File Excel -->
+      <div class="pt-2 border-t border-slate-200">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-2 mt-3">
+          <h3 class="text-sm font-semibold text-blue-950">
+            <i class="fa-solid fa-table me-2"></i> Preview Tabel Hasil Konsolidasi
+          </h3>
+          <span class="text-xs text-slate-400" id="previewHint">Muncul otomatis setelah file toko dimuat.</span>
+        </div>
+        <div class="overflow-x-auto bg-white" id="masterPreviewWrapper">
+          <div class="text-xs text-slate-400 italic py-6 text-center" id="masterPreviewEmpty">Belum ada data. Silakan pilih file Excel toko di atas terlebih dahulu.</div>
+        </div>
+        <div class="flex justify-end mt-3">
+          <button onclick="downloadMasterPNG(event)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-image"></i> Download PNG
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -142,9 +196,27 @@
         `;
         container.appendChild(card);
       });
+
+      // Init file status grid
+      initFileStatusGrid();
     }
 
-    // Normalisasi separator ribuan/desimal (ID/EN) menjadi angka murni, TANPA skala apapun.
+    function initFileStatusGrid() {
+      const grid = document.getElementById("fileStatusGrid");
+      grid.innerHTML = "";
+      stores.forEach(st => {
+        const box = document.createElement("div");
+        box.id = `status_${st.code}`;
+        box.className = "bg-white border border-slate-200 rounded-lg p-2 text-center text-xs flex flex-col justify-between shadow-xs";
+        box.innerHTML = `
+          <span class="font-bold text-blue-900">${st.code}</span>
+          <span class="text-[10px] text-slate-400 mt-1" id="status_text_${st.code}">Belum ada</span>
+        `;
+        grid.appendChild(box);
+      });
+    }
+
+    // Normalisasi separator ribuan/desimal (ID/EN) menjadi angka murni
     function parseRawNumber(str) {
       if (!str) return 0;
       let s = String(str).trim().replace(/\*/g, '');
@@ -185,50 +257,29 @@
       return neg ? -num : num;
     }
 
-    // Parser SEPASANG angka (T & A) dengan SATU skala yang sama untuk keduanya.
-    // context: 'daily' (T/A harian, wajar < 2.000) | 'mtd' (T/A bulan berjalan, wajar < 50.000)
-    // Ini memperbaiki bug lama: T & A dulu diskalakan SENDIRI-SENDIRI (parseStoreValue per nilai),
-    // sehingga pasangan seperti "117,810,000 / 46,553,748" bisa jadi 118 / 46554 (beda skala!),
-    // dan MTD wajar seperti "10,933 / 9,501" malah ikut dibagi 1000 jadi 11 / 10 (padahal sudah benar).
     function parsePair(rawA, rawB, context) {
       let a = parseRawNumber(rawA);
       let b = parseRawNumber(rawB);
       let maxVal = Math.max(Math.abs(a), Math.abs(b));
       let scale = 1;
       if (maxVal >= 100000000) {
-        scale = 1000000; // nilai Rupiah penuh (mis. laporan PRS yg pakai omset, bukan transaksi)
+        scale = 1000000; 
       } else if (context === 'daily' && maxVal >= 2000) {
-        scale = 1000; // transaksi harian tidak realistis > 2.000 -> kemungkinan salah ketik/format
+        scale = 1000; 
       } else if (context === 'mtd' && maxVal >= 50000) {
-        scale = 1000; // transaksi MTD (±30 hari) tidak realistis > 50.000
+        scale = 1000; 
       }
       return { a: Math.round(a / scale), b: Math.round(b / scale) };
     }
 
-    // Parser untuk NILAI TUNGGAL bertipe currency/nominal (LY, Protection, dsb) -> skala ke "Juta"
-    // Catatan: ambang ÷1.000 dinaikkan ke 50.000 (bukan 10.000) karena banyak toko menulis
-    // MTD LY yang SUDAH dalam satuan Juta dengan angka 10.000-an (mis. "10.325" = 10.325 Juta),
-    // bukan angka Rupiah ribuan yang perlu dikonversi. Ambang lama membuat nilai valid ini
-    // ikut terbagi dan jadi salah (10.325 -> 10).
-    function parseSingleCurrency(rawVal, context) {
+    function parseSingleCurrency(rawVal) {
       let n = parseRawNumber(rawVal);
       let abs = Math.abs(n);
-      if (context === 'daily') {
-        // Sales LY harian ditulis toko sbg angka Rupiah PENUH (mis. "77,876,252" = Rp77.876.252),
-        // bukan angka yang sudah dalam satuan Juta. Ambang lama (100.000.000) membuat angka
-        // sebesar ini (puluhan juta) lolos ke cabang ÷1.000 dan tercapture salah jadi "77876".
-        // Untuk konteks harian, angka >= 1 Juta sudah pasti Rupiah penuh -> skalakan ke Juta,
-        // dan BUANG desimalnya (bukan dibulatkan ke atas) supaya "77,876,252" -> "77", bukan "78".
-        if (abs >= 1000000) return Math.trunc(n / 1000000);
-        if (abs >= 50000) return Math.round(n / 1000); // kemungkinan toko salah format (1000x)
-        return Math.round(n);
-      }
-      if (abs >= 100000000) return Math.round(n / 1000000); // Rupiah penuh (miliaran+) -> Juta
-      if (abs >= 50000) return Math.round(n / 1000); // Angka Juta yg tidak wajar (>50rb Juta) -> kemungkinan toko menulis format 1000x lipat (spt Cinere)
+      if (abs >= 100000000) return Math.round(n / 1000000); 
+      if (abs >= 50000) return Math.round(n / 1000); 
       return Math.round(n);
     }
 
-    // Extraction Engine untuk Teks Laporan WA
     function parseStoreText(code, text) {
       let res = { 
         T: 0, A: 0, LY: 0, 
@@ -239,13 +290,10 @@
 
       let cleanText = text.replace(/\*/g, '');
 
-      // 1. Extract Protection
       let protMatch = cleanText.match(/(?:Mitra\s*10\s*Protection|BCA\s*Protection|BCA\s*PROTEKSI|Protection|BCA\s*ins\s*T\/A)\s*:\s*([\d\.,]+(?:\s*\/\s*[\d\.,]+)?)/i);
       if (protMatch) {
         let val = protMatch[1];
         if (val.includes('/')) {
-          // Format "target/aktual" (mis. BCA ins T/A : 10/12) -> ambil nilai KEDUA (aktual),
-          // dan JANGAN fallback ke nilai pertama walau aktualnya 0 (dulu ini bug: 0 dianggap falsy).
           let parts = val.split('/');
           res.prot = parseSingleCurrency(parts[1]);
         } else {
@@ -253,34 +301,31 @@
         }
       }
 
-      // 2. Extract Daily T / A / LY
       let taLyMatch = cleanText.match(/(?:Daily\s*)?T\/A\/LY\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i);
       if (taLyMatch) {
         let p = parsePair(taLyMatch[1], taLyMatch[2], 'daily');
         res.T = p.a; res.A = p.b;
-        res.LY = parseSingleCurrency(taLyMatch[3], 'daily');
+        res.LY = parseSingleCurrency(taLyMatch[3]);
       } else {
         let taMatch = cleanText.match(/T\/A(?:\/ACH)?\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i) || 
-                      cleanText.match(/T\/A\s*:\s*([\d\.,]+)\/([\d\.,]+)/i);
+                    cleanText.match(/T\/A\s*:\s*([\d\.,]+)\/([\d\.,]+)/i);
         if (taMatch) {
           let p = parsePair(taMatch[1], taMatch[2], 'daily');
           res.T = p.a; res.A = p.b;
         }
         
-        // Extract Baris Sales LY / LY / L/Y (Abaikan FFC LY & MTD LY)
         let lines = cleanText.split('\n');
         for (let line of lines) {
           if (line.toUpperCase().includes('FFC')) continue;
           if (line.toUpperCase().includes('MTD')) continue;
           let lyMatch = line.match(/(?:Sales\s*L\s*\/?\s*Y|L\s*\/?\s*Y)\s*[:\s]\s*([\d\.,]+)/i);
           if (lyMatch) {
-            res.LY = parseSingleCurrency(lyMatch[1], 'daily');
+            res.LY = parseSingleCurrency(lyMatch[1]);
             break;
           }
         }
       }
 
-      // 3. Extract MTD T / A / LY
       let mtdTaLyMatch = cleanText.match(/MTD\s*(?:T\s*\/\s*(?:MTD\s*)?A\s*\/\s*(?:MTD\s*)?LY|T\/A)\s*[:\s]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)\s*[\/:|]\s*([\d\.,]+)/i);
       if (mtdTaLyMatch) {
         let p = parsePair(mtdTaLyMatch[1], mtdTaLyMatch[2], 'mtd');
@@ -293,7 +338,6 @@
           res.mtdT = p.a; res.mtdA = p.b;
         }
 
-        // Extract Baris MTD Sales LY / MTD LY / MTD L/Y (Abaikan FFC)
         let lines = cleanText.split('\n');
         for (let line of lines) {
           if (line.toUpperCase().includes('FFC')) continue;
@@ -305,7 +349,6 @@
         }
       }
 
-      // 4. Extract Growth (Abaikan "Growth D")
       let grMatch = cleanText.match(/Growth(?!\s*D)\s*:\s*([+-]?\d+(?:\.\d+)?%|#DIV\/0!)/i) || 
                     cleanText.match(/GR\s*:\s*(#DIV\/0!|[+-]?\d+(?:\.\d+)?%)/i);
 
@@ -320,11 +363,8 @@
       return res;
     }
 
-    // ==== Persistensi Data (localStorage) ====
-    // Kunci penyimpanan di browser, supaya data tidak hilang walau di-refresh
     const STORAGE_KEY = "rekapRegion6_savedData";
 
-    // Simpan seluruh isi textarea toko + tanggal/jam ke localStorage
     function saveToStorage() {
       const data = {
         reportDate: document.getElementById("reportDate").value,
@@ -337,12 +377,9 @@
       });
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) {
-        console.warn("Gagal menyimpan data ke localStorage:", e);
-      }
+      } catch (e) {}
     }
 
-    // Muat kembali data tersimpan dari localStorage (dipanggil saat halaman dibuka)
     function loadFromStorage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -362,25 +399,16 @@
         }
         return true;
       } catch (e) {
-        console.warn("Gagal memuat data dari localStorage:", e);
         return false;
       }
     }
 
-    // Hapus data tersimpan di localStorage
     function clearStorage() {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (e) {
-        console.warn("Gagal menghapus data localStorage:", e);
-      }
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     }
 
-    // Menyimpan hasil parsing "Mitra10 Protection" per toko (tidak ditampilkan di tabel cek,
-    // tapi tetap dipakai saat membangun teks Output)
     let latestProtections = [];
 
-    // Ambil hasil parsing mentah semua toko -> array data yang akan ditampilkan di Tabel Cek & Edit
     function buildStoreDataArray() {
       latestProtections = [];
       return stores.map((st) => {
@@ -401,11 +429,9 @@
       });
     }
 
-    // Render Tabel Cek & Edit (semua cell T/A/LY/MTD/Growth bisa diedit manual, kolom % otomatis)
     function renderReviewTable(dataArr) {
       const tbody = document.getElementById("reviewTableBody");
       tbody.innerHTML = "";
-
       const inputCls = "w-full min-w-[64px] border border-slate-200 rounded px-1.5 py-1 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
 
       dataArr.forEach((d) => {
@@ -431,7 +457,6 @@
       });
     }
 
-    // Baca ulang isi Tabel Cek & Edit saat ini (termasuk perubahan manual dari user)
     function readTableData() {
       const trs = document.querySelectorAll("#reviewTableBody tr");
       const result = [];
@@ -454,7 +479,6 @@
       return result;
     }
 
-    // Update kolom % (achievement Daily & MTD) di tabel setiap kali T/A/MTD diedit
     function updatePctCells() {
       document.querySelectorAll("#reviewTableBody tr").forEach((tr) => {
         const num = (field) => parseFloat(tr.querySelector(`[data-field="${field}"]`).value) || 0;
@@ -466,8 +490,6 @@
       });
     }
 
-    // Bangun teks Output Laporan berdasarkan isi TABEL saat ini (bukan langsung dari teks WA mentah),
-    // supaya kalau ada koreksi manual di tabel, Output ikut berubah otomatis.
     function generateOutputFromTable() {
       updatePctCells();
       const dataArr = readTableData();
@@ -477,29 +499,17 @@
 
       let totalT = 0, totalA = 0, totalLY = 0;
       let lflT = 0, lflA = 0, lflLY = 0;
-
       let mtdTotalT = 0, mtdTotalA = 0, mtdTotalLY = 0;
       let mtdLflT = 0, mtdLflA = 0, mtdLflLY = 0;
-
       let rows = [];
 
       dataArr.forEach((d) => {
-        totalT += d.T;
-        totalA += d.A;
-        totalLY += d.LY;
-
-        mtdTotalT += d.mtdT;
-        mtdTotalA += d.mtdA;
-        mtdTotalLY += d.mtdLY;
+        totalT += d.T; totalA += d.A; totalLY += d.LY;
+        mtdTotalT += d.mtdT; mtdTotalA += d.mtdA; mtdTotalLY += d.mtdLY;
 
         if (d.code !== "PRS" && d.code !== "PYM") {
-          lflT += d.T;
-          lflA += d.A;
-          lflLY += d.LY;
-
-          mtdLflT += d.mtdT;
-          mtdLflA += d.mtdA;
-          mtdLflLY += d.mtdLY;
+          lflT += d.T; lflA += d.A; lflLY += d.LY;
+          mtdLflT += d.mtdT; mtdLflA += d.mtdA; mtdLflLY += d.mtdLY;
         }
 
         let achPct = d.T > 0 ? Math.round((d.A / d.T) * 100) : 0;
@@ -512,20 +522,16 @@
 
       let lflAch = calcAch(lflA, lflT);
       let lflGr = calcGr(lflA, lflLY);
-
       let totalAch = calcAch(totalA, totalT);
       let totalGr = calcGr(totalA, totalLY);
-
       let mtdLflAch = calcAch(mtdLflA, mtdLflT);
       let mtdLflGr = calcGr(mtdLflA, mtdLflLY);
-
       let mtdTotalAch = calcAch(mtdTotalA, mtdTotalT);
       let mtdTotalGr = calcGr(mtdTotalA, mtdTotalLY);
 
-      // Construct WhatsApp Plaintext Report
       let output = `Report Region 6
 ${dateVal}
-\uD83D\uDD55 ${timeVal}
+🕒 ${timeVal}
 
 STORE\t\tT\t|\tA\t\t%\t\t|\tGROWTH
 ${rows.join("\n")}
@@ -541,13 +547,9 @@ Mitra10 Protection
 ${latestProtections.join("\n")}`;
 
       document.getElementById("outputWA").value = output;
-
-      // Simpan otomatis setiap kali output berubah (juga saat mengetik/paste/edit tabel)
       saveToStorage();
     }
 
-    // Main Function: parse ulang semua teks WA mentah -> isi Tabel Cek & Edit -> generate Output
-    // Dipanggil saat paste/ketik di kolom WA (akan menimpa edit manual tabel dengan hasil parsing terbaru)
     function processAllStores() {
       const dataArr = buildStoreDataArray();
       renderReviewTable(dataArr);
@@ -572,6 +574,1086 @@ ${latestProtections.join("\n")}`;
       });
       clearStorage();
       processAllStores();
+    }
+
+    // ==== IMPORT & KONSOLIDASI 9 FILE EXCEL ====
+    // Urutan baris toko pada tabel Master (sesuai contoh gambar)
+    const masterRowOrder = ["DPK", "BGR", "CBN", "KDI", "CNR", "SHL", "TLC", "PRS", "PYM"];
+
+    let storeRawData = {}; // Menyimpan hasil ekstraksi data per kode toko (bukan lagi workbook mentah)
+    let loadedFileNames = {}; // Menyimpan nama file per kode toko (untuk info saja)
+
+    // ---- Helper parsing ----
+    function findRowIndex(rows, matcher, startFrom = 0) {
+      for (let r = startFrom; r < rows.length; r++) {
+        const cell = rows[r] && rows[r][0];
+        if (cell != null && matcher(String(cell).trim().toUpperCase())) return r;
+      }
+      return -1;
+    }
+
+    function findStoreRow(rows, headerRowIdx, storeCode, windowSize = 15) {
+      if (headerRowIdx === -1) return -1;
+      const target = storeCode.trim().toUpperCase();
+      for (let r = headerRowIdx + 1; r < Math.min(rows.length, headerRowIdx + 1 + windowSize); r++) {
+        const cell = rows[r] && rows[r][0];
+        if (cell != null && String(cell).trim().toUpperCase() === target) return r;
+      }
+      return -1;
+    }
+
+    function num(v) {
+      if (v === null || v === undefined || v === '') return 0;
+      if (typeof v === 'number') return v;
+      let s = String(v).trim();
+      if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else if (s.includes('.') && !s.includes(',')) {
+        const parts = s.split('.');
+        if (parts.length > 2) s = parts.join('');
+      }
+      const f = parseFloat(s);
+      return isNaN(f) ? 0 : f;
+    }
+
+    // ==== OFFSET KOLOM TETAP (posisi kolom, BUKAN nama header) ====
+    // Untuk section yang urutan kolomnya selalu SAMA di semua file toko meskipun teks
+    // header tiap file bisa beda-beda/tidak konsisten (DSL & Sales Project/Member/Waiting
+    // Time), kolom dibaca lewat OFFSET tetap dari kolom kode toko (kolom kode toko = 0),
+    // bukan lewat pencarian nama header. Kalau urutan kolom di file toko ternyata berbeda
+    // dari angka di bawah, cukup ubah angkanya di sini saja.
+    // PENTING: template asli menyisipkan kolom RUMUS (ServiceLevel, CONT, Kontribusi,
+    // Achieve%, dst) DI ANTARA kolom data mentah, jadi offset di bawah ini melompati
+    // kolom-kolom rumus tersebut (bukan urutan rapat 1,2,3,4,...).
+    // DSL  -> A=Store B=PD C=OT D=ServiceLevel(rumus) E=Two Days PD F=Two Days OT
+    //         G=CONT(rumus) H=(rumus) I=Internal J=Reschedule K=Dc L=Supp M=Lain2
+    const DSL_COL = { pd: 1, ot: 2, pd2: 4, ot2: 5, internal: 8, rc: 9, tbdc: 10, tbspl: 11, kl: 12 };
+    // SALES PROJECT/MEMBER -> A=Store B=Actual Project C=Contribusi(rumus)
+    //   D=Budget New Member E=Member Registrasi F=New Member Transaksi
+    //   G=Achieve%(rumus) H=(rumus) I=Sales New Member J=Cont Sales(rumus)
+    //   K=Rata-rata Waktu Tunggu L=Total DR M=>10 Menit
+    const SP_COL = { actualProject: 1, budgetNewMember: 3, memberRegistrasi: 4, newMemberTransaksi: 5, salesNewMember: 8, rataRataWaktuTunggu: 10, totalDR: 11, gt10Menit: 12 };
+
+    // ==== PENCARIAN KOLOM BERBASIS NAMA HEADER (bukan posisi tetap) ====
+    // File Excel tiap toko bisa punya urutan kolom yang berbeda-beda (tidak seragam),
+    // jadi kolom dicari lewat TULISAN header-nya (mis. "BUDGET", "ACTUAL", "LY"),
+    // bukan lewat posisi kolom tetap (row[1], row[2], dst) seperti sebelumnya.
+    function normLabel(v) {
+      if (v == null) return '';
+      return String(v).trim().toUpperCase().replace(/\s+/g, ' ');
+    }
+
+    // Cari baris pertama di bawah `fromRow` yang kolom pertamanya berisi kode toko
+    // (DPK/BGR/dst) -> dipakai sebagai batas atas saat memindai baris-baris header,
+    // supaya baris data tidak ikut terbaca sebagai header.
+    function firstDataRowAfter(rows, fromRow, maxWindow = 8) {
+      const codes = stores.map(s => s.code.toUpperCase());
+      const end = Math.min(rows.length, fromRow + maxWindow);
+      for (let r = fromRow; r < end; r++) {
+        if (codes.includes(normLabel(rows[r] && rows[r][0]))) return r;
+      }
+      return end;
+    }
+
+    // Membaca baris-baris header antara `titleRowIdx` (baris judul section, mis. "TIEBS")
+    // dan baris data toko pertama, lalu mengembalikan sebuah "finder" untuk mencari kolom
+    // berdasarkan nama header, dengan dukungan header 2 tingkat (grup + sub-kolom, sel merge).
+    function makeColumnFinder(rows, titleRowIdx) {
+      if (titleRowIdx === -1) return { find: () => -1 };
+      const dataRow = firstDataRowAfter(rows, titleRowIdx + 1);
+      const headerRows = [];
+      for (let r = titleRowIdx + 1; r < dataRow; r++) headerRows.push(rows[r] || []);
+      if (headerRows.length === 0) return { find: () => -1 };
+
+      const maxCol = Math.max(0, ...headerRows.map(r => r.length));
+
+      // rawRows: teks asli tiap sel header (untuk dicocokkan dengan nama kolom/sub-header)
+      const rawRows = headerRows.map(row => {
+        const raw = [];
+        for (let c = 0; c < maxCol; c++) raw[c] = normLabel(row[c]);
+        return raw;
+      });
+      // filledRows: sama seperti rawRows, tapi sel kosong (bekas cell yang di-merge) diisi
+      // dengan teks terakhir di sebelah kirinya -> dipakai untuk mengetahui "grup" tiap kolom
+      const filledRows = headerRows.map(row => {
+        const filled = [];
+        let last = '';
+        for (let c = 0; c < maxCol; c++) {
+          const label = normLabel(row[c]);
+          if (label) last = label;
+          filled[c] = last;
+        }
+        return filled;
+      });
+
+      return {
+        // labelAliases: daftar kemungkinan tulisan sub-header ("BUDGET","TARGET", dst)
+        // groupAliases: (opsional) daftar kemungkinan tulisan grup di atasnya ("SALES","TRAFFIC", dst)
+        //   dipakai untuk membedakan kolom yang nama sub-headernya sama di beberapa grup berbeda
+        //   (mis. "ACT"/"LY" muncul berulang untuk TRAFFIC, INVOICE, E TRAFFIC).
+        find(labelAliases, groupAliases = null, excludeCols = []) {
+          // Kumpulkan SEMUA kolom yang label sub-headernya cocok (mis. semua kolom "BUDGET"
+          // di seluruh section), supaya bisa dibedakan kasus ambigu (nama sama muncul di
+          // beberapa grup, mis. "BUDGET" di MITRA10 PROTECTION dan "BUDGET" di SALES BATHROOM)
+          // dari kasus label yang cuma muncul sekali saja.
+          const allMatches = [];
+          for (let rIdx = 0; rIdx < rawRows.length; rIdx++) {
+            for (let c = 0; c < maxCol; c++) {
+              if (labelAliases.includes(rawRows[rIdx][c])) allMatches.push({ c, rIdx });
+            }
+          }
+          // excludeCols: kolom yang SUDAH dipastikan milik field lain (lewat pencocokan grup
+          // yang jelas), supaya tidak dipakai ulang secara tidak sengaja lewat fallback di
+          // bawah (mis. budget sales bathroom ketiban budget mitra10 protection).
+          const matches = allMatches.filter(m => !excludeCols.includes(m.c));
+          if (!groupAliases) return matches.length ? matches[0].c : -1;
+          for (const m of matches) {
+            for (let gr = m.rIdx; gr >= 0; gr--) {
+              if (groupAliases.includes(filledRows[gr][m.c])) return m.c;
+            }
+          }
+          // Fallback tanpa syarat grup HANYA jika label itu memang cuma muncul di satu
+          // kolom (di luar yang sudah di-exclude). Ini dipakai saat file toko memang tidak
+          // menulis nama grupnya sama sekali (header rata / tidak berjenjang), jadi kolom
+          // satu-satunya itu pasti yang dimaksud.
+          if (matches.length === 1) return matches[0].c;
+          return -1;
+        },
+        // Cari SEMUA kolom yang cocok dengan labelAliases, diurutkan dari kiri ke kanan.
+        // Dipakai untuk kolom yang labelnya berulang di beberapa grup berbeda (mis. "PD"/"OT"
+        // di DSL untuk grup TOTAL lalu grup TWO DAYS DELIVERY) tapi urutan/posisi kolomnya
+        // konsisten di semua file toko, sehingga lebih aman dicari berdasarkan URUTAN
+        // kemunculan (posisi kolom) daripada berdasarkan nama grup di atasnya (yang kadang
+        // tidak ditulis di sebagian file toko).
+        findAll(labelAliases) {
+          const cols = [];
+          for (let rIdx = 0; rIdx < rawRows.length; rIdx++) {
+            for (let c = 0; c < maxCol; c++) {
+              if (labelAliases.includes(rawRows[rIdx][c])) cols.push(c);
+            }
+          }
+          return Array.from(new Set(cols)).sort((a, b) => a - b);
+        }
+      };
+    }
+
+    // Ambil nilai numerik dari 1 baris data toko berdasarkan nama kolom (bukan posisi tetap)
+    function getByHeader(colFinder, row, labelAliases, groupAliases = null, excludeCols = []) {
+      const c = colFinder.find(labelAliases, groupAliases, excludeCols);
+      return c === -1 ? 0 : num(row[c]);
+    }
+
+    // Cari data 1 toko di seluruh sheet workbook (sheet bisa berbeda nama antar file toko)
+    function extractStoreData(workbook, storeCode) {
+      const result = {};
+      for (const sheetName of workbook.SheetNames) {
+        const ws = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
+
+        const tiebsHeader = findRowIndex(rows, s => s === 'TIEBS');
+        if (tiebsHeader === -1) continue; // sheet ini bukan sheet laporan region
+
+        // TIEBS
+        let r = findStoreRow(rows, tiebsHeader, storeCode);
+        if (r !== -1) {
+          const row = rows[r];
+          const cf = makeColumnFinder(rows, tiebsHeader);
+          const trafficActVal = getByHeader(cf, row, ['ACT', 'ACTUAL'], ['TRAFFIC']);
+          const trafficLyVal = getByHeader(cf, row, ['LY'], ['TRAFFIC']);
+          const invoiceActVal = getByHeader(cf, row, ['ACT', 'ACTUAL'], ['INVOICE']);
+          const invoiceLyVal = getByHeader(cf, row, ['LY'], ['INVOICE']);
+          result.tiebs = {
+            budget: getByHeader(cf, row, ['TARGET', 'BUDGET'], ['SALES']),
+            actual: getByHeader(cf, row, ['ACTUAL', 'ACT'], ['SALES']),
+            ly: getByHeader(cf, row, ['LY'], ['SALES']),
+            trafficAct: trafficActVal,
+            trafficLy: trafficLyVal,
+            invoiceAct: invoiceActVal,
+            invoiceLy: invoiceLyVal,
+            // Eff Traffic = INVOICE / TRAFFIC (persen), dihitung sendiri (bukan dibaca dari
+            // kolom "E TRAFFIC" di file toko) supaya konsisten ACT vs ACT dan LY vs LY.
+            etrafficAct: trafficActVal ? invoiceActVal / trafficActVal : 0,
+            etrafficLy: trafficLyVal ? invoiceLyVal / trafficLyVal : 0
+          };
+        }
+
+        // DSL
+        const dslHeader = findRowIndex(rows, s => s === 'DSL', tiebsHeader);
+        r = findStoreRow(rows, dslHeader, storeCode);
+        if (r !== -1) {
+          const row = rows[r];
+          // Posisi kolom DSL sama persis di semua file toko (lihat DSL_COL di atas), jadi
+          // dibaca langsung lewat offset kolom, TANPA mencocokkan teks header sama sekali -
+          // supaya tidak salah kolom saat sebagian file toko menulis header berbeda/tidak
+          // lengkap (mis. DPK tidak menulis sub header PD/OT untuk kolom TOTAL).
+          result.dsl = {
+            pd: num(row[DSL_COL.pd]),
+            ot: num(row[DSL_COL.ot]),
+            pd2: num(row[DSL_COL.pd2]),
+            ot2: num(row[DSL_COL.ot2]),
+            internal: num(row[DSL_COL.internal]),
+            rc: num(row[DSL_COL.rc]),
+            tbdc: num(row[DSL_COL.tbdc]),
+            tbspl: num(row[DSL_COL.tbspl]),
+            kl: num(row[DSL_COL.kl])
+          };
+        }
+
+        // STOCK CLASS A
+        const stockHeader = findRowIndex(rows, s => s.includes('STOCK CLASS A'), dslHeader === -1 ? tiebsHeader : dslHeader);
+        r = findStoreRow(rows, stockHeader, storeCode);
+        if (r !== -1) {
+          const row = rows[r];
+          const cf = makeColumnFinder(rows, stockHeader);
+          result.stockA = {
+            appliances: getByHeader(cf, row, ['APPLIANCES']),
+            bathroom: getByHeader(cf, row, ['BATHROOM']),
+            bm: getByHeader(cf, row, ['BM', 'BUILDING MATERIAL', 'BUILDING MATERIALS', 'BLDG MATERIAL', 'BLD MATERIAL']),
+            dw: getByHeader(cf, row, ['DW', 'DOORS AND WINDOWS', 'DOORS & WINDOWS', 'DOOR AND WINDOW', 'DOORS AND WINDOW']),
+            ell: getByHeader(cf, row, ['ELL', 'ELECTRICAL AND LIGHTING', 'ELECTRICAL & LIGHTING']),
+            fw: getByHeader(cf, row, ['FW', 'FLOORING AND WALL', 'FLOORING & WALL', 'FLOORING AND WALLCOVERING']),
+            hw: getByHeader(cf, row, ['HW', 'HARDWARE']),
+            hhb: getByHeader(cf, row, ['HHB', 'HOUSEWARE & HOBBIES', 'HOUSEWARE AND HOBBIES', 'HOUSEWARES & HOBBIES']),
+            kitchen: getByHeader(cf, row, ['KITCHEN']),
+            ps: getByHeader(cf, row, ['PS', 'PAINT AND SUNDRIES', 'PAINT & SUNDRIES']),
+            pl: getByHeader(cf, row, ['PL', 'PLUMBING']),
+            tools: getByHeader(cf, row, ['TOOLS']),
+            kontribValue: getByHeader(cf, row, ['VALUE'], ['CONTR. SALES CLASS A', 'CONTR SALES CLASS A'])
+          };
+        }
+
+        // SALES PROJECT, MEMBER, WAITING TIME
+        const spHeader = findRowIndex(rows, s => s.includes('SALES PROJECT'), stockHeader === -1 ? tiebsHeader : stockHeader);
+        r = findStoreRow(rows, spHeader, storeCode);
+        if (r !== -1) {
+          const row = rows[r];
+          // Posisi kolom sama persis di semua file toko (lihat SP_COL di atas), jadi dibaca
+          // langsung lewat offset kolom, tanpa mencocokkan teks header.
+          result.salesProj = {
+            actualProject: num(row[SP_COL.actualProject]),
+            budgetNewMember: num(row[SP_COL.budgetNewMember]),
+            memberRegistrasi: num(row[SP_COL.memberRegistrasi]),
+            newMemberTransaksi: num(row[SP_COL.newMemberTransaksi]),
+            salesNewMember: num(row[SP_COL.salesNewMember]),
+            rataRataWaktuTunggu: row[SP_COL.rataRataWaktuTunggu] ?? 0,
+            totalDR: num(row[SP_COL.totalDR]),
+            gt10Menit: num(row[SP_COL.gt10Menit])
+          };
+        }
+
+        // MITRA10 PROTECTION / SALES BATHROOM / SALPER (satu blok baris yang sama)
+        const mitraHeader = findRowIndex(rows, s => s.includes('MITRA10 PROTECTION'), spHeader === -1 ? tiebsHeader : spHeader);
+        r = findStoreRow(rows, mitraHeader, storeCode);
+        if (r !== -1) {
+          const row = rows[r];
+          const cf = makeColumnFinder(rows, mitraHeader);
+          const salperGroup = ['SALPER JUALAN >2 KATEGORI', 'SALPER JUALAN > 2 KATEGORI', 'SALPER', 'SALPER IPI >2', 'SALPER IPI>2'];
+          // Cari dulu kolom BUDGET milik MITRA10 PROTECTION secara eksplisit, supaya kolom
+          // ini bisa di-exclude saat mencari BUDGET Sales Bathroom di bawah - mencegah kasus
+          // budget sales bathroom ketiban budget mitra10 protection saat file toko cuma
+          // punya satu kolom "BUDGET" (mitra10 protection) dan tidak ada kolom budget
+          // terpisah untuk sales bathroom.
+          const mitraBudgetCol = cf.find(['BUDGET'], ['MITRA10 PROTECTION']);
+          result.mitra10 = {
+            budget: mitraBudgetCol === -1 ? 0 : num(row[mitraBudgetCol]),
+            actual: getByHeader(cf, row, ['ACTUAL'], ['MITRA10 PROTECTION']),
+            mtd: getByHeader(cf, row, ['MTD'], ['MITRA10 PROTECTION'])
+          };
+          result.salesBathroom = {
+            budget: getByHeader(cf, row, ['BUDGET'], ['SALES BATHROOM'], mitraBudgetCol !== -1 ? [mitraBudgetCol] : []),
+            act: getByHeader(cf, row, ['ACT'], ['SALES BATHROOM']),
+            ly: getByHeader(cf, row, ['LY'], ['SALES BATHROOM'])
+          };
+          // ALL SALPER & >2 KATEGORI: sebagian file toko pakai tulisan header yang berbeda-
+          // beda ("ALL SALPER"/"SALPER"/"TOTAL SALPER", dan ">2 KATEGORI"/"IPI >2"/
+          // "SALPER IPI>2"/">2"), jadi semua alias itu ditampung di sini.
+          result.salper = {
+            allSalper: getByHeader(cf, row, ['ALL SALPER', 'SALPER', 'TOTAL SALPER'], salperGroup),
+            ipi2: getByHeader(cf, row, ['>2 KATEGORI', '> 2 KATEGORI', '>2', '> 2', 'IPI >2', 'IPI>2', 'SALPER IPI>2', 'SALPER IPI >2'], salperGroup)
+          };
+        }
+      }
+      return result;
+    }
+
+    function handleExcelFilesSelected(input) {
+      const files = input.files;
+      if (!files || files.length === 0) return;
+
+      document.getElementById("fileCountLabel").textContent = `${files.length} file dipilih`;
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // Deteksi toko berdasarkan nama file dulu, lalu fallback cari kode toko di isi sheet
+            let detectedCode = null;
+            const fname = file.name.toUpperCase();
+            stores.forEach(st => {
+              if (fname.includes(st.code) || fname.includes(st.name.toUpperCase())) {
+                detectedCode = st.code;
+              }
+            });
+
+            if (!detectedCode) {
+              for (const sheetName of workbook.SheetNames) {
+                const ws = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
+                const tiebsHeader = findRowIndex(rows, s => s === 'TIEBS');
+                if (tiebsHeader === -1) continue;
+                // Cari baris toko mana saja yang punya data terisi (bukan placeholder) di sheet ini
+                const cfDetect = makeColumnFinder(rows, tiebsHeader);
+                const actualCol = cfDetect.find(['ACTUAL', 'ACT'], ['SALES']);
+                for (const st of stores) {
+                  const r = findStoreRow(rows, tiebsHeader, st.code);
+                  if (r !== -1 && actualCol !== -1 && rows[r][actualCol]) { // kolom Actual terisi -> ini baris data aslinya
+                    detectedCode = st.code;
+                    break;
+                  }
+                }
+                if (detectedCode) break;
+              }
+            }
+
+            if (detectedCode) {
+              const extracted = extractStoreData(workbook, detectedCode);
+              storeRawData[detectedCode] = extracted;
+              loadedFileNames[detectedCode] = file.name;
+
+              const statusEl = document.getElementById(`status_text_${detectedCode}`);
+              if (statusEl) {
+                statusEl.textContent = "✔ Loaded";
+                statusEl.className = "text-[10px] text-emerald-600 font-bold mt-1";
+              }
+            } else {
+              console.warn(`Kode toko tidak terdeteksi untuk file: ${file.name}`);
+              alert(`Kode toko tidak terdeteksi pada file "${file.name}". Pastikan nama file mengandung kode toko (misal DPK, BGR, dst).`);
+            }
+          } catch (err) {
+            console.error("Gagal membaca file excel:", err);
+            alert(`Gagal membaca file "${file.name}": ${err.message}`);
+          }
+          renderMasterPreview();
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // ---- Helper format angka & persen untuk preview HTML ----
+    function safeDiv(a, b) { a = a || 0; b = b || 0; return b ? a / b : 0; }
+    function fmtN(v) { return Math.round(v || 0).toLocaleString("id-ID"); }
+    function fmtP(v) { if (!isFinite(v)) v = 0; return (v * 100).toFixed(2) + "%"; }
+    // Format persentase ala Excel: tampilkan #DIV/0! saat pembagi 0/kosong (bukan disamakan dengan 0.00%)
+    function fmtPDiv(a, b) {
+      a = a || 0; b = b || 0;
+      if (!b) return "#DIV/0!";
+      return fmtP(a / b);
+    }
+    // Konversi angka waktu Excel (fraksi hari, contoh 0.00625 = 00:09:00) menjadi format hh:mm:ss
+    function fmtTime(v) {
+      v = v || 0;
+      const sign = v < 0 ? "-" : "";
+      const totalSeconds = Math.round(Math.abs(v) * 86400);
+      const hh = Math.floor(totalSeconds / 3600);
+      const mm = Math.floor((totalSeconds % 3600) / 60);
+      const ss = totalSeconds % 60;
+      return sign + [hh, mm, ss].map(n => String(n).padStart(2, "0")).join(":");
+    }
+
+    // ---- Render Preview Tabel Hasil Konsolidasi 9 File Excel (untuk capture PNG) ----
+    function renderMasterPreview() {
+      const wrapper = document.getElementById("masterPreviewWrapper");
+      const loadedKeys = masterRowOrder.filter(c => storeRawData[c]);
+      if (loadedKeys.length === 0) {
+        wrapper.innerHTML = '<div class="text-xs text-slate-400 italic py-6 text-center" id="masterPreviewEmpty">Belum ada data. Silakan pilih file Excel toko di atas terlebih dahulu.</div>';
+        return;
+      }
+
+      const tanggal = document.getElementById("reportDate")?.value || "-";
+      const thStyle = "p-1.5 border border-slate-300 bg-blue-900 text-white text-[10px] font-semibold text-center";
+      const tdStyle = "p-1.5 border border-slate-300 text-[10px] text-center";
+      const tdLeft = "p-1.5 border border-slate-300 text-[10px] text-left font-bold";
+      const totalStyle = "p-1.5 border border-slate-300 bg-blue-900 text-white text-[10px] font-bold text-center";
+      const titleStyle = "p-1.5 border border-slate-300 bg-amber-300 text-slate-900 text-xs font-bold italic text-center";
+
+      const rows = (cols) => masterRowOrder.map(code => {
+        const cells = cols(code).map(v => `<td class="${tdStyle}">${v}</td>`).join("");
+        return `<tr><td class="${tdLeft}">${code}</td>${cells}</tr>`;
+      }).join("");
+
+      // ===== SECTION 1: TIEBS =====
+      const tiebsData = {};
+      let sT = 0, sA = 0, sLy = 0, sTrA = 0, sTrLy = 0, sInvA = 0, sInvLy = 0;
+      masterRowOrder.forEach(code => {
+        const d = (storeRawData[code] && storeRawData[code].tiebs) || {};
+        tiebsData[code] = d;
+        sT += d.budget || 0; sA += d.actual || 0; sLy += d.ly || 0;
+        sTrA += d.trafficAct || 0; sTrLy += d.trafficLy || 0;
+        sInvA += d.invoiceAct || 0; sInvLy += d.invoiceLy || 0;
+      });
+      // Eff Traffic total Region 6 = total INVOICE / total TRAFFIC (bukan jumlah persen tiap toko)
+      const sEtA = safeDiv(sInvA, sTrA), sEtLy = safeDiv(sInvLy, sTrLy);
+      const tiebsRows = rows(code => {
+        const d = tiebsData[code];
+        const basketAct = safeDiv(d.actual, d.invoiceAct), basketLy = safeDiv(d.ly, d.invoiceLy);
+        return [
+          fmtN(d.budget), fmtN(d.actual), fmtN(d.ly), fmtP(safeDiv(d.actual, d.budget)), fmtP(safeDiv((d.actual || 0) - (d.ly || 0), d.ly)),
+          fmtN(d.trafficAct), fmtN(d.trafficLy), fmtP(safeDiv((d.trafficAct || 0) - (d.trafficLy || 0), d.trafficLy)),
+          fmtN(d.invoiceAct), fmtN(d.invoiceLy), fmtP(safeDiv((d.invoiceAct || 0) - (d.invoiceLy || 0), d.invoiceLy)),
+          fmtP(d.etrafficAct), fmtP(d.etrafficLy), fmtP(safeDiv((d.etrafficAct || 0) - (d.etrafficLy || 0), d.etrafficLy)),
+          fmtN(basketAct), fmtN(basketLy), fmtP(safeDiv(basketAct - basketLy, basketLy))
+        ];
+      });
+      const bAT = safeDiv(sA, sInvA), bLT = safeDiv(sLy, sInvLy);
+      const tiebsTotal = [
+        fmtN(sT), fmtN(sA), fmtN(sLy), fmtP(safeDiv(sA, sT)), fmtP(safeDiv(sA - sLy, sLy)),
+        fmtN(sTrA), fmtN(sTrLy), fmtP(safeDiv(sTrA - sTrLy, sTrLy)),
+        fmtN(sInvA), fmtN(sInvLy), fmtP(safeDiv(sInvA - sInvLy, sInvLy)),
+        fmtP(sEtA), fmtP(sEtLy), fmtP(safeDiv(sEtA - sEtLy, sEtLy)),
+        fmtN(bAT), fmtN(bLT), fmtP(safeDiv(bAT - bLT, bLT))
+      ].map(v => `<td class="${totalStyle}">${v}</td>`).join("");
+
+      const tiebsTable = `
+        <table class="border-collapse w-full mb-4" style="min-width:1400px">
+          <thead>
+            <tr><td colspan="18" class="${titleStyle}">TIEBS</td></tr>
+            <tr>
+              <th rowspan="2" class="${thStyle}">STORE NAME</th>
+              <th colspan="5" class="${thStyle}">SALES</th>
+              <th colspan="2" class="${thStyle}">TRAFFIC</th>
+              <th rowspan="2" class="${thStyle}">GRW</th>
+              <th colspan="2" class="${thStyle}">INVOICE</th>
+              <th rowspan="2" class="${thStyle}">GRW</th>
+              <th colspan="2" class="${thStyle}">E TRAFFIC</th>
+              <th rowspan="2" class="${thStyle}">GRW</th>
+              <th colspan="2" class="${thStyle}">BASKET SIZE</th>
+              <th rowspan="2" class="${thStyle}">GRW</th>
+            </tr>
+            <tr>
+              <th class="${thStyle}">TARGET</th><th class="${thStyle}">ACTUAL</th><th class="${thStyle}">LY</th><th class="${thStyle}">ACV</th><th class="${thStyle}">GROWTH</th>
+              <th class="${thStyle}">ACT</th><th class="${thStyle}">LY</th>
+              <th class="${thStyle}">ACT</th><th class="${thStyle}">LY</th>
+              <th class="${thStyle}">ACT</th><th class="${thStyle}">LY</th>
+              <th class="${thStyle}">ACT</th><th class="${thStyle}">LY</th>
+            </tr>
+          </thead>
+          <tbody>${tiebsRows}<tr><td class="${totalStyle}">TOTAL</td>${tiebsTotal}</tr></tbody>
+        </table>`;
+
+      // ===== SECTION 2: DSL =====
+      const dslData = {};
+      let dPd = 0, dOt = 0, dPd2 = 0, dOt2 = 0, dInt = 0, dRc = 0, dTbdc = 0, dTbspl = 0, dKl = 0;
+      masterRowOrder.forEach(code => {
+        const d = (storeRawData[code] && storeRawData[code].dsl) || {};
+        dslData[code] = d;
+        dPd += d.pd || 0; dOt += d.ot || 0; dPd2 += d.pd2 || 0; dOt2 += d.ot2 || 0;
+        dInt += d.internal || 0; dRc += d.rc || 0; dTbdc += d.tbdc || 0; dTbspl += d.tbspl || 0; dKl += d.kl || 0;
+      });
+      const dslRows = rows(code => {
+        const d = dslData[code];
+        const totalReason = (d.internal || 0) + (d.rc || 0) + (d.tbdc || 0) + (d.tbspl || 0) + (d.kl || 0);
+        return [
+          fmtN(d.pd), fmtN(d.ot), fmtP(safeDiv(d.ot, d.pd)),
+          fmtN(d.pd2), fmtN(d.ot2), fmtP(safeDiv(d.pd2, d.pd)), fmtP(safeDiv(d.ot2, d.pd2)),
+          fmtN(d.internal), fmtN(d.rc), fmtN(d.tbdc), fmtN(d.tbspl), fmtN(d.kl), fmtN(totalReason)
+        ];
+      });
+      const dTotalReason = dInt + dRc + dTbdc + dTbspl + dKl;
+      const dslTotal = [
+        fmtN(dPd), fmtN(dOt), fmtP(safeDiv(dOt, dPd)),
+        fmtN(dPd2), fmtN(dOt2), fmtP(safeDiv(dPd2, dPd)), fmtP(safeDiv(dOt2, dPd2)),
+        fmtN(dInt), fmtN(dRc), fmtN(dTbdc), fmtN(dTbspl), fmtN(dKl), fmtN(dTotalReason)
+      ].map(v => `<td class="${totalStyle}">${v}</td>`).join("");
+
+      const dslTable = `
+        <table class="border-collapse w-full mb-4" style="min-width:1200px">
+          <thead>
+            <tr><td colspan="14" class="${titleStyle}">DSL</td></tr>
+            <tr>
+              <th rowspan="2" class="${thStyle}">STORE NAME</th>
+              <th colspan="2" class="${thStyle}">TOTAL</th>
+              <th rowspan="2" class="${thStyle}">SERVICE LEVEL</th>
+              <th colspan="3" class="${thStyle}">TWO DAYS DELIVERY (0-2 HARI)</th>
+              <th rowspan="2" class="${thStyle}">SERVICE LEVEL</th>
+              <th colspan="5" class="${thStyle}">REASON KETERLAMBATAN</th>
+              <th rowspan="2" class="${thStyle}">TOTAL</th>
+            </tr>
+            <tr>
+              <th class="${thStyle}">PD</th><th class="${thStyle}">OT</th>
+              <th class="${thStyle}">PD</th><th class="${thStyle}">OT</th><th class="${thStyle}">CONT</th>
+              <th class="${thStyle}">INTERNAL</th><th class="${thStyle}">RC</th><th class="${thStyle}">TBDC</th><th class="${thStyle}">TBSPL</th><th class="${thStyle}">KL</th>
+            </tr>
+          </thead>
+          <tbody>${dslRows}<tr><td class="${totalStyle}">TOTAL</td>${dslTotal}</tr></tbody>
+        </table>`;
+
+      // ===== SECTION 3: STOCK CLASS A =====
+      const stockCats = ["appliances", "bathroom", "bm", "dw", "ell", "fw", "hw", "hhb", "kitchen", "ps", "pl", "tools"];
+      const stockLabels = ["APPLIANCES", "BATHROOM", "BM", "DW", "ELL", "FW", "HW", "HHB", "KITCHEN", "PS", "PL", "TOOLS"];
+      const sumCats = new Array(12).fill(0);
+      let sValue = 0, sSalesStore = 0;
+      const stockRows = rows(code => {
+        const d = (storeRawData[code] && storeRawData[code].stockA) || {};
+        const cats = stockCats.map((k, i) => { const v = d[k] || 0; sumCats[i] += v; return v; });
+        const totalReg6 = cats.reduce((a, b) => a + b, 0);
+        const salesStore = (tiebsData[code] && tiebsData[code].actual) || 0;
+        sValue += d.kontribValue || 0; sSalesStore += salesStore;
+        return [...cats.map(fmtN), fmtN(totalReg6), fmtN(d.kontribValue), fmtN(salesStore), fmtP(safeDiv(d.kontribValue, salesStore))];
+      });
+      const sumTotalReg6 = sumCats.reduce((a, b) => a + b, 0);
+      const stockTotal = [
+        ...sumCats.map(fmtN), fmtN(sumTotalReg6), fmtN(sValue), fmtN(sSalesStore), fmtP(safeDiv(sValue, sSalesStore))
+      ].map(v => `<td class="${totalStyle}">${v}</td>`).join("");
+
+      const stockTable = `
+        <table class="border-collapse w-full mb-4" style="min-width:1400px">
+          <thead>
+            <tr><td colspan="17" class="${titleStyle}">STOCK CLASS A</td></tr>
+            <tr>
+              <th rowspan="2" class="${thStyle}">STORE NAME</th>
+              <th colspan="12" class="${thStyle}">VALUE STOCK CLASS A</th>
+              <th rowspan="2" class="${thStyle}">TOTAL REG-6</th>
+              <th colspan="3" class="${thStyle}">CONTR. SALES CLASS A</th>
+            </tr>
+            <tr>
+              ${stockLabels.map(l => `<th class="${thStyle}">${l}</th>`).join("")}
+              <th class="${thStyle}">VALUE</th><th class="${thStyle}">SALES STORE</th><th class="${thStyle}">CONTR.</th>
+            </tr>
+          </thead>
+          <tbody>${stockRows}<tr><td class="${totalStyle}">TOTAL</td>${stockTotal}</tr></tbody>
+        </table>`;
+
+      // ===== SECTION 4: SALES PROJECT, MEMBER, WAITING TIME =====
+      let spAP = 0, spBN = 0, spMR = 0, spNMT = 0, spSNM = 0, spTDR = 0, spGT = 0;
+      const spRows = rows(code => {
+        const d = (storeRawData[code] && storeRawData[code].salesProj) || {};
+        const salesActual = (tiebsData[code] && tiebsData[code].actual) || 0;
+        spAP += d.actualProject || 0; spBN += d.budgetNewMember || 0; spMR += d.memberRegistrasi || 0;
+        spNMT += d.newMemberTransaksi || 0; spSNM += d.salesNewMember || 0; spTDR += d.totalDR || 0; spGT += d.gt10Menit || 0;
+        return [
+          fmtN(d.actualProject), fmtP(safeDiv(d.actualProject, salesActual)),
+          fmtN(d.budgetNewMember), fmtN(d.memberRegistrasi), fmtN(d.newMemberTransaksi),
+          fmtP(safeDiv(d.memberRegistrasi, d.budgetNewMember)), fmtP(safeDiv(d.newMemberTransaksi, d.memberRegistrasi)),
+          fmtN(d.salesNewMember), fmtP(safeDiv(d.salesNewMember, salesActual)),
+          fmtTime(d.rataRataWaktuTunggu || 0), fmtN(d.totalDR), fmtN(d.gt10Menit),
+          fmtP(safeDiv((d.totalDR || 0) - (d.gt10Menit || 0), d.totalDR))
+        ];
+      });
+      const spTotal = [
+        fmtN(spAP), fmtP(safeDiv(spAP, sA)),
+        fmtN(spBN), fmtN(spMR), fmtN(spNMT),
+        fmtP(safeDiv(spMR, spBN)), fmtP(safeDiv(spNMT, spMR)),
+        fmtN(spSNM), fmtP(safeDiv(spSNM, sA)),
+        "-", fmtN(spTDR), fmtN(spGT),
+        fmtP(safeDiv(spTDR - spGT, spTDR))
+      ].map(v => `<td class="${totalStyle}">${v}</td>`).join("");
+
+      const spTable = `
+        <table class="border-collapse w-full mb-4" style="min-width:1300px">
+          <thead>
+            <tr><td colspan="14" class="${titleStyle}">SALES PROJECT, MEMBER, WAITING TIME</td></tr>
+            <tr>
+              <th rowspan="2" class="${thStyle}">STORE NAME</th>
+              <th colspan="2" class="${thStyle}">SALES PROJECT</th>
+              <th colspan="7" class="${thStyle}">MEMBER</th>
+              <th colspan="4" class="${thStyle}">WAITING TIME</th>
+            </tr>
+            <tr>
+              <th class="${thStyle}">ACTUAL PROJECT</th><th class="${thStyle}">CONTRIBUTION</th>
+              <th class="${thStyle}">BUDGET NEW MEMBER</th><th class="${thStyle}">MEMBER REGISTRASI</th><th class="${thStyle}">NEW MEMBER TRANSAKSI</th>
+              <th class="${thStyle}">ACHIVE NEW MEMBER REGISTRASI</th><th class="${thStyle}">NEMS</th><th class="${thStyle}">SALES NEW MEMBER</th><th class="${thStyle}">CONTR. SALES NEW MEMBER</th>
+              <th class="${thStyle}">RATA RATA WAKTU TUNGGU</th><th class="${thStyle}">TOTAL DR</th><th class="${thStyle}">&gt; 10 MENIT</th><th class="${thStyle}">ACHIVEMENT</th>
+            </tr>
+          </thead>
+          <tbody>${spRows}<tr><td class="${totalStyle}">TOTAL</td>${spTotal}</tr></tbody>
+        </table>`;
+
+      // ===== SECTION 5: MITRA10 PROTECTION + SALPER + SALES BATHROOM =====
+      let mB = 0, mA = 0, mM = 0, salAll = 0, salIpi2 = 0, bBudget = 0, bAct = 0, bLy = 0;
+      const m10Rows = rows(code => {
+        const dm = (storeRawData[code] && storeRawData[code].mitra10) || {};
+        const db = (storeRawData[code] && storeRawData[code].salesBathroom) || {};
+        const dsalp = (storeRawData[code] && storeRawData[code].salper) || {};
+        mB += dm.budget || 0; mA += dm.actual || 0; mM += dm.mtd || 0;
+        salAll += dsalp.allSalper || 0; salIpi2 += dsalp.ipi2 || 0;
+        bBudget += db.budget || 0; bAct += db.act || 0; bLy += db.ly || 0;
+        return [
+          fmtN(dm.budget), fmtN(dm.actual), fmtN(dm.mtd), fmtPDiv(dm.actual, dm.budget), "-",
+          fmtN(dsalp.allSalper), fmtN(dsalp.ipi2), fmtPDiv(dsalp.ipi2, dsalp.allSalper),
+          db.budget ? fmtN(db.budget) : "", fmtN(db.act), fmtN(db.ly), fmtPDiv(db.act, db.budget), fmtPDiv((db.act || 0) - (db.ly || 0), db.ly)
+        ];
+      });
+      const m10Total = [
+        fmtN(mB), fmtN(mA), fmtN(mM), fmtPDiv(mA, mB), "-",
+        fmtN(salAll), fmtN(salIpi2), fmtPDiv(salIpi2, salAll),
+        fmtN(bBudget), fmtN(bAct), fmtN(bLy), fmtPDiv(bAct, bBudget), fmtPDiv(bAct - bLy, bLy)
+      ].map(v => `<td class="${totalStyle}">${v}</td>`).join("");
+
+      const m10Table = `
+        <table class="border-collapse w-full" style="min-width:1200px">
+          <thead>
+            <tr><td colspan="6" class="${titleStyle}">MITRA10 PROTECTION</td><td colspan="7" class="${titleStyle}">SALPER JUALAN &gt;2 KATEGORI &amp; SALES BATHROOM</td></tr>
+            <tr>
+              <th rowspan="2" class="${thStyle}">STORE NAME</th>
+              <th colspan="5" class="${thStyle}">MITRA10 PROTECTION</th>
+              <th colspan="3" class="${thStyle}">SALPER JUALAN &gt;2 KATEGORI</th>
+              <th colspan="5" class="${thStyle}">SALES BATHROOM</th>
+            </tr>
+            <tr>
+              <th class="${thStyle}">BUDGET</th><th class="${thStyle}">ACTUAL</th><th class="${thStyle}">MTD</th><th class="${thStyle}">ACHV</th><th class="${thStyle}">ACHV MTD</th>
+              <th class="${thStyle}">ALL SALPER</th><th class="${thStyle}">&gt;2 KATEGORI</th><th class="${thStyle}">KONTR</th>
+              <th class="${thStyle}">BUDGET</th><th class="${thStyle}">ACT</th><th class="${thStyle}">LY</th><th class="${thStyle}">ACH</th><th class="${thStyle}">GROWTH</th>
+            </tr>
+          </thead>
+          <tbody>${m10Rows}<tr><td class="${totalStyle}">TOTAL</td>${m10Total}</tr></tbody>
+        </table>`;
+
+      wrapper.innerHTML = `
+        <div class="p-2">
+          <div class="text-center font-bold text-base mb-1">DAILY REPORT CLOSING REGION 6</div>
+          <div class="text-center text-xs italic font-bold text-rose-700 mb-3">${tanggal}</div>
+          ${tiebsTable}${dslTable}${stockTable}${spTable}${m10Table}
+        </div>`;
+    }
+
+    function downloadMasterPNG(evt) {
+      renderMasterPreview();
+      const loadedKeys = masterRowOrder.filter(c => storeRawData[c]);
+      if (loadedKeys.length === 0) {
+        alert("Belum ada file Excel toko yang berhasil dimuat/diidentifikasi! Silakan pilih file excel terlebih dahulu.");
+        return;
+      }
+      const wrapper = document.getElementById("masterPreviewWrapper");
+      const tanggal = (document.getElementById("reportDate")?.value || "").trim();
+      const btn = evt?.target?.closest("button");
+      const originalHTML = btn ? btn.innerHTML : null;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+      }
+
+      // Paksa lebar penuh (tanpa terpotong scroll horizontal) sebelum di-capture
+      const fullWidth = wrapper.scrollWidth;
+      const prevStyle = {
+        overflow: wrapper.style.overflow,
+        width: wrapper.style.width,
+        maxWidth: wrapper.style.maxWidth,
+        display: wrapper.style.display
+      };
+      wrapper.style.overflow = "visible";
+      wrapper.style.maxWidth = "none";
+      wrapper.style.width = fullWidth + "px";
+      wrapper.style.display = "inline-block";
+
+      // Beri browser waktu reflow sebelum capture
+      requestAnimationFrame(() => {
+        html2canvas(wrapper, {
+          backgroundColor: "#ffffff",
+          scale: 2,
+          useCORS: true,
+          width: wrapper.scrollWidth,
+          height: wrapper.scrollHeight,
+          windowWidth: wrapper.scrollWidth,
+          windowHeight: wrapper.scrollHeight
+        }).then((canvas) => {
+          const link = document.createElement("a");
+          const safeDate = tanggal ? tanggal.replace(/[\/\\:]/g, "-") : new Date().toISOString().slice(0, 10);
+          link.download = `Master_Daily_Report_Region_6_${safeDate}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        }).catch((err) => {
+          alert("Gagal membuat gambar PNG: " + err.message);
+        }).finally(() => {
+          wrapper.style.overflow = prevStyle.overflow;
+          wrapper.style.width = prevStyle.width;
+          wrapper.style.maxWidth = prevStyle.maxWidth;
+          wrapper.style.display = prevStyle.display;
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+          }
+        });
+      });
+    }
+
+    // ---- Style helpers untuk ExcelJS ----
+    const FILL_YELLOW = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    const FILL_BLUE = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5AD1' } };
+    const FILL_GRAY = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+    const THIN_BORDER = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    const FONT_HEADER = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+    const FONT_TITLE = { bold: true, italic: true, size: 11 };
+    const CENTER = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+    function styleSectionTitle(ws, row, colSpan) {
+      ws.mergeCells(row, 1, row, colSpan);
+      const cell = ws.getCell(row, 1);
+      cell.font = FONT_TITLE;
+      cell.fill = FILL_YELLOW;
+      cell.alignment = CENTER;
+      for (let c = 1; c <= colSpan; c++) { ws.getCell(row, c).fill = FILL_YELLOW; ws.getCell(row, c).border = THIN_BORDER; }
+    }
+
+    function styleHeaderCell(ws, row, col) {
+      const cell = ws.getCell(row, col);
+      cell.font = FONT_HEADER;
+      cell.fill = FILL_BLUE;
+      cell.alignment = CENTER;
+      cell.border = THIN_BORDER;
+    }
+
+    function setCell(ws, row, col, value, opts = {}) {
+      const cell = ws.getCell(row, col);
+      if (opts.formula) {
+        cell.value = { formula: opts.formula };
+      } else {
+        cell.value = value;
+      }
+      cell.border = THIN_BORDER;
+      cell.alignment = { vertical: 'middle', horizontal: opts.align || 'center' };
+      if (opts.numFmt) cell.numFmt = opts.numFmt;
+      if (opts.bold) cell.font = { bold: true };
+      if (opts.grayFill) cell.fill = FILL_GRAY;
+      if (opts.colorByValue !== undefined) {
+        cell.font = { color: { argb: opts.colorByValue < 0 ? 'FFC00000' : 'FF006100' }, bold: opts.bold || false };
+      }
+      return cell;
+    }
+
+    const NUM_FMT = '#,##0';
+    const PCT_FMT = '0.00%';
+
+    // Fungsi menggabungkan 9 file Excel toko menjadi 1 file Master Excel (1 tabel gabungan, sesuai contoh gambar)
+    async function generateMasterExcel() {
+      const loadedKeys = Object.keys(storeRawData);
+      if (loadedKeys.length === 0) {
+        alert("Belum ada file Excel toko yang berhasil dimuat/diidentifikasi! Silakan pilih file excel terlebih dahulu.");
+        return;
+      }
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("DAILY REPORT REGION 6", { views: [{ state: 'frozen', ySplit: 0 }] });
+
+      const tanggal = document.getElementById("reportDate").value || "-";
+      const n = masterRowOrder.length; // 9
+
+      // ===== TITLE =====
+      ws.mergeCells(1, 1, 1, 18);
+      const titleCell = ws.getCell(1, 1);
+      titleCell.value = "DAILY REPORT CLOSING REGION 6";
+      titleCell.font = { bold: true, size: 14 };
+      titleCell.alignment = CENTER;
+      ws.mergeCells(2, 1, 2, 3);
+      ws.getCell(2, 1).value = tanggal;
+      ws.getCell(2, 1).font = { italic: true, bold: true, color: { argb: 'FFC00000' } };
+
+      let curRow = 3;
+
+      // ===================== SECTION 1: TIEBS =====================
+      const tiebsTitleRow = curRow;
+      styleSectionTitle(ws, tiebsTitleRow, 18);
+      ws.getCell(tiebsTitleRow, 1).value = "TIEBS";
+      curRow++;
+      const tiebsH1 = curRow, tiebsH2 = curRow + 1;
+      ws.mergeCells(tiebsH1, 1, tiebsH2, 1); ws.getCell(tiebsH1, 1).value = "STORE NAME";
+      ws.mergeCells(tiebsH1, 2, tiebsH1, 6); ws.getCell(tiebsH1, 2).value = "SALES";
+      ["TARGET", "ACTUAL", "LY", "ACV", "GROWTH"].forEach((t, i) => ws.getCell(tiebsH2, 2 + i).value = t);
+      ws.mergeCells(tiebsH1, 7, tiebsH1, 8); ws.getCell(tiebsH1, 7).value = "TRAFFIC";
+      ["ACT", "LY"].forEach((t, i) => ws.getCell(tiebsH2, 7 + i).value = t);
+      ws.mergeCells(tiebsH1, 9, tiebsH2, 9); ws.getCell(tiebsH1, 9).value = "GRW";
+      ws.mergeCells(tiebsH1, 10, tiebsH1, 11); ws.getCell(tiebsH1, 10).value = "INVOICE";
+      ["ACT", "LY"].forEach((t, i) => ws.getCell(tiebsH2, 10 + i).value = t);
+      ws.mergeCells(tiebsH1, 12, tiebsH2, 12); ws.getCell(tiebsH1, 12).value = "GRW";
+      ws.mergeCells(tiebsH1, 13, tiebsH1, 14); ws.getCell(tiebsH1, 13).value = "E TRAFFIC";
+      ["ACT", "LY"].forEach((t, i) => ws.getCell(tiebsH2, 13 + i).value = t);
+      ws.mergeCells(tiebsH1, 15, tiebsH2, 15); ws.getCell(tiebsH1, 15).value = "GRW";
+      ws.mergeCells(tiebsH1, 16, tiebsH1, 17); ws.getCell(tiebsH1, 16).value = "BASKET SIZE";
+      ["ACT", "LY"].forEach((t, i) => ws.getCell(tiebsH2, 16 + i).value = t);
+      ws.mergeCells(tiebsH1, 18, tiebsH2, 18); ws.getCell(tiebsH1, 18).value = "GRW";
+      for (let c = 1; c <= 18; c++) { styleHeaderCell(ws, tiebsH1, c); styleHeaderCell(ws, tiebsH2, c); }
+      curRow += 2;
+
+      const tiebsDataStart = curRow;
+      masterRowOrder.forEach((code, i) => {
+        const row = tiebsDataStart + i;
+        const d = (storeRawData[code] && storeRawData[code].tiebs) || {};
+        setCell(ws, row, 1, code, { align: 'left', bold: true });
+        setCell(ws, row, 2, d.budget || 0, { numFmt: NUM_FMT, align: 'right' });
+        setCell(ws, row, 3, d.actual || 0, { numFmt: NUM_FMT, align: 'right' });
+        setCell(ws, row, 4, d.ly || 0, { numFmt: NUM_FMT, align: 'right' });
+        setCell(ws, row, 5, 0, { formula: `IFERROR(C${row}/B${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 6, 0, { formula: `IFERROR((C${row}-D${row})/D${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 7, d.trafficAct || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 8, d.trafficLy || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 9, 0, { formula: `IFERROR((G${row}-H${row})/H${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 10, d.invoiceAct || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 11, d.invoiceLy || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 12, 0, { formula: `IFERROR((J${row}-K${row})/K${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 13, d.etrafficAct || 0, { numFmt: PCT_FMT });
+        setCell(ws, row, 14, d.etrafficLy || 0, { numFmt: PCT_FMT });
+        setCell(ws, row, 15, 0, { formula: `IFERROR((M${row}-N${row})/N${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 16, 0, { formula: `IFERROR(C${row}/J${row},0)`, numFmt: NUM_FMT });
+        setCell(ws, row, 17, 0, { formula: `IFERROR(D${row}/K${row},0)`, numFmt: NUM_FMT });
+        setCell(ws, row, 18, 0, { formula: `IFERROR((P${row}-Q${row})/Q${row},0)`, numFmt: PCT_FMT, grayFill: true });
+      });
+      const tiebsTotalRow = tiebsDataStart + n;
+      setCell(ws, tiebsTotalRow, 1, "TOTAL", { align: 'left', bold: true });
+      [2, 3, 4, 7, 8, 10, 11].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, tiebsTotalRow, c, 0, { formula: `SUM(${colLetter}${tiebsDataStart}:${colLetter}${tiebsTotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, tiebsTotalRow, 5, 0, { formula: `IFERROR(C${tiebsTotalRow}/B${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 6, 0, { formula: `IFERROR((C${tiebsTotalRow}-D${tiebsTotalRow})/D${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 9, 0, { formula: `IFERROR((G${tiebsTotalRow}-H${tiebsTotalRow})/H${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 12, 0, { formula: `IFERROR((J${tiebsTotalRow}-K${tiebsTotalRow})/K${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      // E TRAFFIC total = total INVOICE / total TRAFFIC (persen), ACT dan LY masing-masing —
+      // bukan penjumlahan persen tiap toko.
+      setCell(ws, tiebsTotalRow, 13, 0, { formula: `IFERROR(J${tiebsTotalRow}/G${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 14, 0, { formula: `IFERROR(K${tiebsTotalRow}/H${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 15, 0, { formula: `IFERROR((M${tiebsTotalRow}-N${tiebsTotalRow})/N${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 16, 0, { formula: `IFERROR(C${tiebsTotalRow}/J${tiebsTotalRow},0)`, numFmt: NUM_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 17, 0, { formula: `IFERROR(D${tiebsTotalRow}/K${tiebsTotalRow},0)`, numFmt: NUM_FMT, bold: true });
+      setCell(ws, tiebsTotalRow, 18, 0, { formula: `IFERROR((P${tiebsTotalRow}-Q${tiebsTotalRow})/Q${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true, grayFill: true });
+      for (let c = 1; c <= 18; c++) ws.getCell(tiebsTotalRow, c).fill = FILL_BLUE, ws.getCell(tiebsTotalRow, c).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      curRow = tiebsTotalRow + 2;
+
+      // ===================== SECTION 2: DSL =====================
+      const dslTitleRow = curRow;
+      styleSectionTitle(ws, dslTitleRow, 14);
+      ws.getCell(dslTitleRow, 1).value = "DSL";
+      curRow++;
+      const dslH1 = curRow, dslH2 = curRow + 1;
+      ws.mergeCells(dslH1, 1, dslH2, 1); ws.getCell(dslH1, 1).value = "STORE NAME";
+      ws.mergeCells(dslH1, 2, dslH1, 3); ws.getCell(dslH1, 2).value = "TOTAL";
+      ["PD", "OT"].forEach((t, i) => ws.getCell(dslH2, 2 + i).value = t);
+      ws.mergeCells(dslH1, 4, dslH2, 4); ws.getCell(dslH1, 4).value = "SERVICE LEVEL";
+      ws.mergeCells(dslH1, 5, dslH1, 7); ws.getCell(dslH1, 5).value = "TWO DAYS DELIVERY (0-2 HARI)";
+      ["PD", "OT", "CONT"].forEach((t, i) => ws.getCell(dslH2, 5 + i).value = t);
+      ws.mergeCells(dslH1, 8, dslH2, 8); ws.getCell(dslH1, 8).value = "SERVICE LEVEL";
+      ws.mergeCells(dslH1, 9, dslH1, 13); ws.getCell(dslH1, 9).value = "REASON KETERLAMBATAN";
+      ["INTERNAL", "RC", "TBDC", "TBSPL", "KL"].forEach((t, i) => ws.getCell(dslH2, 9 + i).value = t);
+      ws.mergeCells(dslH1, 14, dslH2, 14); ws.getCell(dslH1, 14).value = "TOTAL";
+      for (let c = 1; c <= 14; c++) { styleHeaderCell(ws, dslH1, c); styleHeaderCell(ws, dslH2, c); }
+      curRow += 2;
+
+      const dslDataStart = curRow;
+      masterRowOrder.forEach((code, i) => {
+        const row = dslDataStart + i;
+        const d = (storeRawData[code] && storeRawData[code].dsl) || {};
+        setCell(ws, row, 1, code, { align: 'left', bold: true });
+        setCell(ws, row, 2, d.pd || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 3, d.ot || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 4, 0, { formula: `IFERROR(C${row}/B${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 5, d.pd2 || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 6, d.ot2 || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 7, 0, { formula: `IFERROR(E${row}/B${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 8, 0, { formula: `IFERROR(F${row}/E${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 9, d.internal || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 10, d.rc || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 11, d.tbdc || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 12, d.tbspl || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 13, d.kl || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 14, 0, { formula: `SUM(I${row}:M${row})`, numFmt: NUM_FMT });
+      });
+      const dslTotalRow = dslDataStart + n;
+      setCell(ws, dslTotalRow, 1, "TOTAL", { align: 'left', bold: true });
+      [2, 3, 5, 6, 9, 10, 11, 12, 13].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, dslTotalRow, c, 0, { formula: `SUM(${colLetter}${dslDataStart}:${colLetter}${dslTotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, dslTotalRow, 4, 0, { formula: `IFERROR(C${dslTotalRow}/B${dslTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, dslTotalRow, 7, 0, { formula: `IFERROR(E${dslTotalRow}/B${dslTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, dslTotalRow, 8, 0, { formula: `IFERROR(F${dslTotalRow}/E${dslTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, dslTotalRow, 14, 0, { formula: `SUM(I${dslTotalRow}:M${dslTotalRow})`, numFmt: NUM_FMT, bold: true });
+      for (let c = 1; c <= 14; c++) ws.getCell(dslTotalRow, c).fill = FILL_BLUE, ws.getCell(dslTotalRow, c).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      curRow = dslTotalRow + 2;
+
+      // ===================== SECTION 3: STOCK CLASS A =====================
+      const stkTitleRow = curRow;
+      styleSectionTitle(ws, stkTitleRow, 17);
+      ws.getCell(stkTitleRow, 1).value = "STOCK CLASS A";
+      curRow++;
+      const stkH1 = curRow, stkH2 = curRow + 1;
+      ws.mergeCells(stkH1, 1, stkH2, 1); ws.getCell(stkH1, 1).value = "STORE NAME";
+      ws.mergeCells(stkH1, 2, stkH1, 13); ws.getCell(stkH1, 2).value = "VALUE STOCK CLASS A";
+      const stockCats = ["APPLIANCES", "BATHROOM", "BM", "DW", "ELL", "FW", "HW", "HHB", "KITCHEN", "PS", "PL", "TOOLS"];
+      stockCats.forEach((t, i) => ws.getCell(stkH2, 2 + i).value = t);
+      ws.mergeCells(stkH1, 14, stkH2, 14); ws.getCell(stkH1, 14).value = "TOTAL REG-6";
+      ws.mergeCells(stkH1, 15, stkH1, 17); ws.getCell(stkH1, 15).value = "CONTR. SALES CLASS A";
+      ["VALUE", "SALES STORE", "CONTR."].forEach((t, i) => ws.getCell(stkH2, 15 + i).value = t);
+      for (let c = 1; c <= 17; c++) { styleHeaderCell(ws, stkH1, c); styleHeaderCell(ws, stkH2, c); }
+      curRow += 2;
+
+      const stkDataStart = curRow;
+      masterRowOrder.forEach((code, i) => {
+        const row = stkDataStart + i;
+        const d = (storeRawData[code] && storeRawData[code].stockA) || {};
+        const tiebsRow = tiebsDataStart + i; // baris toko yg sama di section TIEBS (untuk ambil Sales Actual)
+        setCell(ws, row, 1, code, { align: 'left', bold: true });
+        const cats = [d.appliances, d.bathroom, d.bm, d.dw, d.ell, d.fw, d.hw, d.hhb, d.kitchen, d.ps, d.pl, d.tools];
+        cats.forEach((v, ci) => setCell(ws, row, 2 + ci, v || 0, { numFmt: NUM_FMT }));
+        setCell(ws, row, 14, 0, { formula: `SUM(B${row}:M${row})`, numFmt: NUM_FMT, bold: true });
+        setCell(ws, row, 15, d.kontribValue || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 16, 0, { formula: `'DAILY REPORT REGION 6'!C${tiebsRow}`, numFmt: NUM_FMT });
+        setCell(ws, row, 17, 0, { formula: `IFERROR(O${row}/P${row},0)`, numFmt: PCT_FMT });
+      });
+      const stkTotalRow = stkDataStart + n;
+      setCell(ws, stkTotalRow, 1, "TOTAL", { align: 'left', bold: true });
+      for (let c = 2; c <= 16; c++) {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, stkTotalRow, c, 0, { formula: `SUM(${colLetter}${stkDataStart}:${colLetter}${stkTotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      }
+      setCell(ws, stkTotalRow, 17, 0, { formula: `IFERROR(O${stkTotalRow}/P${stkTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      for (let c = 1; c <= 17; c++) ws.getCell(stkTotalRow, c).fill = FILL_BLUE, ws.getCell(stkTotalRow, c).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      curRow = stkTotalRow + 2;
+
+      // ===================== SECTION 4: SALES PROJECT, MEMBER, WAITING TIME =====================
+      const spTitleRow = curRow;
+      styleSectionTitle(ws, spTitleRow, 14);
+      ws.getCell(spTitleRow, 1).value = "SALES PROJECT, MEMBER, WAITING TIME";
+      curRow++;
+      const spH1 = curRow, spH2 = curRow + 1;
+      ws.mergeCells(spH1, 1, spH2, 1); ws.getCell(spH1, 1).value = "STORE NAME";
+      ws.mergeCells(spH1, 2, spH1, 3); ws.getCell(spH1, 2).value = "SALES PROJECT";
+      ["ACTUAL PROJECT", "CONTRIBUTION"].forEach((t, i) => ws.getCell(spH2, 2 + i).value = t);
+      ws.mergeCells(spH1, 4, spH1, 10); ws.getCell(spH1, 4).value = "MEMBER";
+      ["BUDGET NEW MEMBER", "MEMBER REGISTRASI", "NEW MEMBER TRANSAKSI", "ACHIVE NEW MEMBER REGISTRASI", "NEMS", "SALES NEW MEMBER", "CONTR. SALES NEW MEMBER"].forEach((t, i) => ws.getCell(spH2, 4 + i).value = t);
+      ws.mergeCells(spH1, 11, spH1, 14); ws.getCell(spH1, 11).value = "WAITING TIME";
+      ["RATA RATA WAKTU TUNGGU", "TOTAL DR", "> 10 MENIT", "ACHIVEMENT"].forEach((t, i) => ws.getCell(spH2, 11 + i).value = t);
+      for (let c = 1; c <= 14; c++) { styleHeaderCell(ws, spH1, c); styleHeaderCell(ws, spH2, c); }
+      curRow += 2;
+
+      const spDataStart = curRow;
+      masterRowOrder.forEach((code, i) => {
+        const row = spDataStart + i;
+        const d = (storeRawData[code] && storeRawData[code].salesProj) || {};
+        const tiebsRow = tiebsDataStart + i;
+        setCell(ws, row, 1, code, { align: 'left', bold: true });
+        setCell(ws, row, 2, d.actualProject || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 3, 0, { formula: `IFERROR(B${row}/C${tiebsRow},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 4, d.budgetNewMember || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 5, d.memberRegistrasi || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 6, d.newMemberTransaksi || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 7, 0, { formula: `IFERROR(E${row}/D${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 8, 0, { formula: `IFERROR(F${row}/E${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 9, d.salesNewMember || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 10, 0, { formula: `IFERROR(I${row}/C${tiebsRow},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 11, d.rataRataWaktuTunggu || 0, { numFmt: 'hh:mm:ss' });
+        setCell(ws, row, 12, d.totalDR || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 13, d.gt10Menit || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 14, 0, { formula: `IFERROR((L${row}-M${row})/L${row},0)`, numFmt: PCT_FMT });
+      });
+      const spTotalRow = spDataStart + n;
+      setCell(ws, spTotalRow, 1, "TOTAL", { align: 'left', bold: true });
+      [2, 4, 5, 6, 9, 12, 13].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, spTotalRow, c, 0, { formula: `SUM(${colLetter}${spDataStart}:${colLetter}${spTotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, spTotalRow, 3, 0, { formula: `IFERROR(B${spTotalRow}/C${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, spTotalRow, 7, 0, { formula: `IFERROR(E${spTotalRow}/D${spTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, spTotalRow, 8, 0, { formula: `IFERROR(F${spTotalRow}/E${spTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, spTotalRow, 10, 0, { formula: `IFERROR(I${spTotalRow}/C${tiebsTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, spTotalRow, 11, 0, { numFmt: 'hh:mm:ss', bold: true });
+      setCell(ws, spTotalRow, 14, 0, { formula: `IFERROR((L${spTotalRow}-M${spTotalRow})/L${spTotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      for (let c = 1; c <= 14; c++) ws.getCell(spTotalRow, c).fill = FILL_BLUE, ws.getCell(spTotalRow, c).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      curRow = spTotalRow + 2;
+
+      // ===================== SECTION 5: MITRA10 PROTECTION  +  SALPER >2 KATEGORI & SALES BATHROOM =====================
+      const m10TitleRow = curRow;
+      ws.mergeCells(m10TitleRow, 1, m10TitleRow, 6); ws.getCell(m10TitleRow, 1).value = "MITRA10 PROTECTION";
+      ws.mergeCells(m10TitleRow, 8, m10TitleRow, 16); ws.getCell(m10TitleRow, 8).value = "SALPER JUALAN >2 KATEGORI & SALES BATHROOM";
+      [1, 8].forEach(startCol => {
+        const span = startCol === 1 ? 6 : 9;
+        for (let c = startCol; c < startCol + span; c++) { ws.getCell(m10TitleRow, c).fill = FILL_YELLOW; ws.getCell(m10TitleRow, c).border = THIN_BORDER; ws.getCell(m10TitleRow, c).font = FONT_TITLE; ws.getCell(m10TitleRow, c).alignment = CENTER; }
+      });
+      curRow++;
+      const m10H1 = curRow, m10H2 = curRow + 1;
+      ws.mergeCells(m10H1, 1, m10H2, 1); ws.getCell(m10H1, 1).value = "STORE NAME";
+      ws.mergeCells(m10H1, 2, m10H1, 6); ws.getCell(m10H1, 2).value = "MITRA10 PROTECTION";
+      ["BUDGET", "ACTUAL", "MTD", "ACHV", "ACHV MTD"].forEach((t, i) => ws.getCell(m10H2, 2 + i).value = t);
+
+      ws.mergeCells(m10H1, 8, m10H2, 8); ws.getCell(m10H1, 8).value = "STORE NAME";
+      ws.mergeCells(m10H1, 9, m10H1, 11); ws.getCell(m10H1, 9).value = "SALPER JUALAN >2 KATEGORI";
+      ["ALL SALPER", ">2 KATEGORI", "KONTR"].forEach((t, i) => ws.getCell(m10H2, 9 + i).value = t);
+      ws.mergeCells(m10H1, 12, m10H1, 16); ws.getCell(m10H1, 12).value = "SALES BATHROOM";
+      ["BUDGET", "ACT", "LY", "ACH", "GROWTH"].forEach((t, i) => ws.getCell(m10H2, 12 + i).value = t);
+      for (let c = 1; c <= 16; c++) { styleHeaderCell(ws, m10H1, c); styleHeaderCell(ws, m10H2, c); }
+      curRow += 2;
+
+      const m10DataStart = curRow;
+      masterRowOrder.forEach((code, i) => {
+        const row = m10DataStart + i;
+        const dm = (storeRawData[code] && storeRawData[code].mitra10) || {};
+        const db = (storeRawData[code] && storeRawData[code].salesBathroom) || {};
+        const dsalp = (storeRawData[code] && storeRawData[code].salper) || {};
+        setCell(ws, row, 1, code, { align: 'left', bold: true });
+        setCell(ws, row, 2, dm.budget || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 3, dm.actual || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 4, dm.mtd || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 5, 0, { formula: `IFERROR(C${row}/B${row},0)`, numFmt: PCT_FMT });
+        setCell(ws, row, 6, "", { align: 'center' }); // ACHV MTD: budget bulanan tidak tersedia dari sumber -> dikosongkan
+
+        setCell(ws, row, 8, code, { align: 'left', bold: true });
+        setCell(ws, row, 9, dsalp.allSalper || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 10, dsalp.ipi2 || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 11, 0, { formula: `J${row}/I${row}`, numFmt: PCT_FMT });
+        setCell(ws, row, 12, db.budget || "", { numFmt: NUM_FMT }); // Budget Sales Bathroom (jika tersedia dari sumber)
+        setCell(ws, row, 13, db.act || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 14, db.ly || 0, { numFmt: NUM_FMT });
+        setCell(ws, row, 15, 0, { formula: `M${row}/L${row}`, numFmt: PCT_FMT });
+        setCell(ws, row, 16, 0, { formula: `(M${row}-N${row})/N${row}`, numFmt: PCT_FMT });
+      });
+      const m10TotalRow = m10DataStart + n;
+      setCell(ws, m10TotalRow, 1, "TOTAL", { align: 'left', bold: true });
+      [2, 3, 4].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, m10TotalRow, c, 0, { formula: `SUM(${colLetter}${m10DataStart}:${colLetter}${m10TotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, m10TotalRow, 5, 0, { formula: `IFERROR(C${m10TotalRow}/B${m10TotalRow},0)`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, m10TotalRow, 6, "", {});
+      setCell(ws, m10TotalRow, 8, "TOTAL", { align: 'left', bold: true });
+      [9, 10].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, m10TotalRow, c, 0, { formula: `SUM(${colLetter}${m10DataStart}:${colLetter}${m10TotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, m10TotalRow, 11, 0, { formula: `J${m10TotalRow}/I${m10TotalRow}`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, m10TotalRow, 12, 0, { formula: `SUM(L${m10DataStart}:L${m10TotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      [13, 14].forEach(c => {
+        const colLetter = ws.getColumn(c).letter;
+        setCell(ws, m10TotalRow, c, 0, { formula: `SUM(${colLetter}${m10DataStart}:${colLetter}${m10TotalRow - 1})`, numFmt: NUM_FMT, bold: true });
+      });
+      setCell(ws, m10TotalRow, 15, 0, { formula: `M${m10TotalRow}/L${m10TotalRow}`, numFmt: PCT_FMT, bold: true });
+      setCell(ws, m10TotalRow, 16, 0, { formula: `(M${m10TotalRow}-N${m10TotalRow})/N${m10TotalRow}`, numFmt: PCT_FMT, bold: true });
+      for (let c = 1; c <= 16; c++) ws.getCell(m10TotalRow, c).fill = FILL_BLUE, ws.getCell(m10TotalRow, c).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      // ===== Lebar Kolom =====
+      ws.getColumn(1).width = 12;
+      for (let c = 2; c <= 18; c++) ws.getColumn(c).width = 14;
+
+      // ===== Simpan & Download =====
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+      const todayStr = tanggal !== "-" ? tanggal.replace(/[^a-zA-Z0-9-]/g, "_") : "REKAP";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `Master_Daily_Report_Region_6_${todayStr}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      const missing = masterRowOrder.filter(c => !storeRawData[c]);
+      let msg = "File Master Excel Gabungan berhasil di-generate dan didownload!";
+      if (missing.length > 0) {
+        msg += `\n\nCatatan: data toko berikut belum diupload/terdeteksi sehingga baris-nya kosong: ${missing.join(", ")}`;
+      }
+      alert(msg);
     }
 
     // Initialize Page
