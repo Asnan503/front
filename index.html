@@ -13,7 +13,7 @@
     --ink: #3b2a3a;
     --ink-soft: #6d5a6b;
     --rose: #c2185b;
-    --card: rgba(255, 255, 255, .78);
+    --card: rgba(255, 255, 255, .8);
     --line: rgba(194, 24, 91, .18);
   }
 
@@ -38,13 +38,61 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* ---------- Latar love ---------- */
+  #hearts-bg {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cpath fill='%23f06292' fill-opacity='.16' transform='translate(18 22) rotate(-14 12 12) scale(1.6)' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3Cpath fill='%23ba68c8' fill-opacity='.14' transform='translate(104 52) rotate(12 12 12) scale(2.3)' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3Cpath fill='%23ff8a65' fill-opacity='.14' transform='translate(52 118) rotate(-8 12 12) scale(1.2)' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3Cpath fill='%23f06292' fill-opacity='.12' transform='translate(138 132) rotate(16 12 12) scale(1.4)' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  .big-heart {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(92vmin, 700px);
+    height: min(92vmin, 700px);
+    margin: calc(min(92vmin, 700px) / -2) 0 0 calc(min(92vmin, 700px) / -2);
+    color: #f06292;
+    opacity: .16;
+    animation: beat 2.8s ease-in-out infinite;
+  }
+  .big-heart svg { width: 100%; height: 100%; display: block; }
+
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    12% { transform: scale(1.05); }
+    24% { transform: scale(1); }
+    36% { transform: scale(1.04); }
+    50% { transform: scale(1); }
+  }
+
+  .heart {
+    position: absolute;
+    top: 0;
+    will-change: transform;
+    animation: rise linear infinite;
+  }
+  .heart .sway {
+    animation: sway ease-in-out infinite alternate;
+  }
+  .heart svg { display: block; width: 100%; height: 100%; }
+
+  @keyframes rise {
+    from { transform: translateY(115vh); }
+    to   { transform: translateY(-15vh); }
+  }
+
   /* ---------- Bunga beterbangan ---------- */
   #flowers {
     position: fixed;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
-    z-index: 0;
+    z-index: 2;
   }
 
   .flower {
@@ -77,7 +125,18 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .big-heart, .heart, .heart .sway,
     .flower, .flower .sway, .flower svg { animation: none !important; }
+  }
+
+  /* ---------- Kembang api ---------- */
+  #fx {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 3;
   }
 
   /* ---------- Layout ---------- */
@@ -183,10 +242,9 @@
 </head>
 <body>
 
-  <!-- Sprite bunga -->
+  <!-- Sprite bunga & love -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <!-- Sakura 5 kelopak -->
       <symbol id="sakura" viewBox="-50 -50 100 100">
         <g fill="currentColor">
           <ellipse cx="0" cy="-24" rx="15" ry="24"/>
@@ -197,7 +255,6 @@
         </g>
         <circle r="8" fill="#ffd54f"/>
       </symbol>
-      <!-- Daisy 8 kelopak -->
       <symbol id="daisy" viewBox="-50 -50 100 100">
         <g fill="currentColor">
           <ellipse cx="0" cy="-30" rx="8" ry="18"/>
@@ -211,13 +268,18 @@
         </g>
         <circle r="11" fill="#ffb300"/>
       </symbol>
-      <!-- Kelopak tunggal -->
       <symbol id="petal" viewBox="-50 -50 100 100">
         <path d="M0 -42 C 26 -24, 26 18, 0 42 C -26 18, -26 -24, 0 -42 Z" fill="currentColor"/>
+      </symbol>
+      <symbol id="heart" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </symbol>
     </defs>
   </svg>
 
+  <div id="hearts-bg" aria-hidden="true">
+    <div class="big-heart"><svg viewBox="0 0 24 24"><use href="#heart"/></svg></div>
+  </div>
   <div id="flowers" aria-hidden="true"></div>
 
   <main>
@@ -227,7 +289,7 @@
           <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
         </div>
         <div class="meta">
-          <strong>Asn</strong>
+          <strong>Tim Kami</strong>
           <span>Pemberitahuan penutupan layanan</span>
         </div>
       </div>
@@ -237,7 +299,7 @@
 
         <p class="lead">Layanan ini telah resmi berakhir dan tidak lagi tersedia.</p>
 
-        <p>Terima kasih sudah menggunakan dan menjadi bagian dari perjalanan. Setiap waktu dan kepercayaan yang pernah diberikan akan selalu menjadi bagian dari cerita ini.</p>
+        <p>Terima kasih sudah menggunakan dan menjadi bagian dari perjalanan kami. Setiap waktu dan kepercayaan yang pernah diberikan akan selalu menjadi bagian dari cerita ini.</p>
 
         <p>Sebuah perjalanan mungkin telah sampai di penghujungnya, tetapi cerita akan terus berjalan di tempat lain.</p>
 
@@ -254,54 +316,236 @@
 
   <footer>Powered by ASN</footer>
 
+  <canvas id="fx" aria-hidden="true"></canvas>
+
 <script>
-  (function () {
-    var box = document.getElementById('flowers');
-    var types = ['sakura', 'sakura', 'daisy', 'petal', 'petal'];
-    var colors = ['#f48fb1', '#f8bbd0', '#ce93d8', '#ffab91', '#ffffff', '#f06292', '#b39ddb'];
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var count = window.innerWidth < 600 ? 16 : 28;
+(function () {
+  var XLINK = 'http://www.w3.org/1999/xlink';
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var small = window.innerWidth < 600;
 
-    function rnd(min, max) { return Math.random() * (max - min) + min; }
+  function rnd(min, max) { return Math.random() * (max - min) + min; }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    for (var i = 0; i < count; i++) {
-      var size = rnd(18, 46);
-      var fall = rnd(12, 26);
-      var el = document.createElement('div');
-      el.className = 'flower';
-      el.style.left = rnd(-2, 100) + 'vw';
-      el.style.width = el.style.height = size + 'px';
-      el.style.opacity = rnd(0.55, 0.95).toFixed(2);
-      el.style.animationDuration = fall + 's';
-      el.style.animationDelay = (-rnd(0, fall)) + 's';
-
-      var sway = document.createElement('div');
-      sway.className = 'sway';
-      sway.style.width = sway.style.height = '100%';
-      sway.style.animationDuration = rnd(3, 6) + 's';
-      sway.style.animationDelay = (-rnd(0, 5)) + 's';
-
-      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('viewBox', '-50 -50 100 100');
-      svg.style.color = colors[Math.floor(Math.random() * colors.length)];
+  function makeIcon(id, color, spin) {
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('viewBox', id === 'heart' ? '0 0 24 24' : '-50 -50 100 100');
+    svg.style.color = color;
+    if (spin) {
       svg.style.animationDuration = rnd(6, 14) + 's';
       if (Math.random() > 0.5) svg.style.animationDirection = 'reverse';
-
-      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-      use.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + types[Math.floor(Math.random() * types.length)]);
-      use.setAttribute('href', use.getAttributeNS('http://www.w3.org/1999/xlink', 'href'));
-      svg.appendChild(use);
-
-      sway.appendChild(svg);
-      el.appendChild(sway);
-
-      if (reduce) {
-        el.style.top = rnd(0, 95) + 'vh';
-        el.style.opacity = '0.5';
-      }
-      box.appendChild(el);
     }
-  })();
+    var use = document.createElementNS(SVGNS, 'use');
+    use.setAttributeNS(XLINK, 'href', '#' + id);
+    use.setAttribute('href', '#' + id);
+    svg.appendChild(use);
+    return svg;
+  }
+
+  /* ---------- Love yang naik pelan ---------- */
+  var heartBox = document.getElementById('hearts-bg');
+  var heartColors = ['#f48fb1', '#f06292', '#ce93d8', '#ffab91', '#ffffff'];
+  var heartCount = small ? 9 : 16;
+
+  for (var h = 0; h < heartCount; h++) {
+    var hs = rnd(16, 38), hd = rnd(16, 30);
+    var hEl = document.createElement('div');
+    hEl.className = 'heart';
+    hEl.style.left = rnd(0, 98) + 'vw';
+    hEl.style.width = hEl.style.height = hs + 'px';
+    hEl.style.opacity = rnd(0.3, 0.6).toFixed(2);
+    hEl.style.animationDuration = hd + 's';
+    hEl.style.animationDelay = (-rnd(0, hd)) + 's';
+
+    var hSway = document.createElement('div');
+    hSway.className = 'sway';
+    hSway.style.width = hSway.style.height = '100%';
+    hSway.style.animationDuration = rnd(3, 6) + 's';
+    hSway.style.animationDelay = (-rnd(0, 5)) + 's';
+
+    hSway.appendChild(makeIcon('heart', pick(heartColors), false));
+    hEl.appendChild(hSway);
+    if (reduce) { hEl.style.top = rnd(0, 92) + 'vh'; hEl.style.opacity = '0.3'; }
+    heartBox.appendChild(hEl);
+  }
+
+  /* ---------- Bunga beterbangan ---------- */
+  var box = document.getElementById('flowers');
+  var types = ['sakura', 'sakura', 'daisy', 'petal', 'petal'];
+  var colors = ['#f48fb1', '#f8bbd0', '#ce93d8', '#ffab91', '#ffffff', '#f06292', '#b39ddb'];
+  var flowers = [];
+  var count = small ? 36 : 70;
+
+  for (var i = 0; i < count; i++) {
+    var size = rnd(16, 52);
+    var fall = rnd(9, 24);
+    var color = pick(colors);
+
+    var el = document.createElement('div');
+    el.className = 'flower';
+    el.style.left = rnd(-2, 100) + 'vw';
+    el.style.width = el.style.height = size + 'px';
+    el.style.opacity = rnd(0.6, 0.95).toFixed(2);
+    el.style.animationDuration = fall + 's';
+    el.style.animationDelay = (-rnd(0, fall)) + 's';
+
+    var sway = document.createElement('div');
+    sway.className = 'sway';
+    sway.style.width = sway.style.height = '100%';
+    sway.style.animationDuration = rnd(3, 6) + 's';
+    sway.style.animationDelay = (-rnd(0, 5)) + 's';
+
+    sway.appendChild(makeIcon(pick(types), color, true));
+    el.appendChild(sway);
+
+    if (reduce) { el.style.top = rnd(0, 95) + 'vh'; el.style.opacity = '0.5'; }
+    box.appendChild(el);
+    flowers.push({ el: el, sway: sway, size: size, color: color, popped: false });
+  }
+
+  /* ---------- Kembang api ---------- */
+  if (reduce) return;
+
+  var canvas = document.getElementById('fx');
+  var ctx = canvas.getContext('2d');
+  var heartPath = new Path2D('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
+  var particles = [];
+  var rings = [];
+  var running = false;
+  var lastT = 0;
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function burst(x, y, color, size) {
+    var n = Math.round(24 + size / 2);
+    var palette = [color, color, '#ffd54f', '#ffffff', '#f06292', '#ce93d8'];
+    var power = 0.85 + size / 70;
+    for (var k = 0; k < n; k++) {
+      var a = (k / n) * Math.PI * 2 + rnd(-0.14, 0.14);
+      var sp = rnd(2.2, 6.5) * power;
+      var r = Math.random();
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 1, decay: rnd(0.011, 0.02),
+        size: rnd(4, 9),
+        rot: rnd(0, 6.28), vr: rnd(-0.2, 0.2),
+        shape: r < 0.45 ? 0 : (r < 0.75 ? 1 : 2),
+        color: pick(palette)
+      });
+    }
+    rings.push({ x: x, y: y, r: size / 2, life: 1, color: color });
+    if (!running) { running = true; lastT = performance.now(); requestAnimationFrame(frame); }
+  }
+
+  function frame(t) {
+    var dt = Math.min((t - lastT) / 16.67, 3);
+    lastT = t;
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    for (var r = rings.length - 1; r >= 0; r--) {
+      var ring = rings[r];
+      ring.r += 3.2 * dt;
+      ring.life -= 0.05 * dt;
+      if (ring.life <= 0) { rings.splice(r, 1); continue; }
+      ctx.globalAlpha = ring.life * 0.7;
+      ctx.strokeStyle = ring.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.vx *= Math.pow(0.985, dt);
+      p.vy = p.vy * Math.pow(0.985, dt) + 0.09 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vr * dt;
+      p.life -= p.decay * dt;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+      var s = p.size * (0.5 + p.life * 0.5);
+      ctx.globalAlpha = Math.min(1, p.life * 1.3);
+      ctx.fillStyle = p.color;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      if (p.shape === 0) {
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.shape === 1) {
+        var hs = (s * 1.8) / 24;
+        ctx.scale(hs, hs);
+        ctx.translate(-12, -12);
+        ctx.fill(heartPath);
+      } else {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 0.4, s * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    if (particles.length || rings.length) {
+      requestAnimationFrame(frame);
+    } else {
+      running = false;
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    }
+  }
+
+  /* ---------- Deteksi kursor menyentuh bunga ---------- */
+  var pointer = null;
+  var checking = false;
+
+  function pop(f, x, y) {
+    f.popped = true;
+    f.el.style.visibility = 'hidden';
+    burst(x, y, f.color, f.size);
+    setTimeout(function () {
+      f.el.style.visibility = 'visible';
+      f.popped = false;
+    }, rnd(2500, 4500));
+  }
+
+  function check() {
+    if (!pointer) { checking = false; return; }
+    for (var i = 0; i < flowers.length; i++) {
+      var f = flowers[i];
+      if (f.popped) continue;
+      var rc = f.sway.getBoundingClientRect();
+      var cx = rc.left + rc.width / 2;
+      var cy = rc.top + rc.height / 2;
+      var radius = Math.max(rc.width, rc.height) / 2 + 8;
+      var dx = pointer.x - cx, dy = pointer.y - cy;
+      if (dx * dx + dy * dy < radius * radius) pop(f, cx, cy);
+    }
+    requestAnimationFrame(check);
+  }
+
+  function setPointer(e) {
+    pointer = { x: e.clientX, y: e.clientY };
+    if (!checking) { checking = true; requestAnimationFrame(check); }
+  }
+
+  window.addEventListener('pointermove', setPointer, { passive: true });
+  window.addEventListener('pointerdown', setPointer, { passive: true });
+  window.addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') pointer = null; });
+  window.addEventListener('pointercancel', function () { pointer = null; });
+  document.documentElement.addEventListener('mouseleave', function () { pointer = null; });
+})();
 </script>
 </body>
 </html>
